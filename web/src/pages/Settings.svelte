@@ -46,6 +46,18 @@
     toast('ยกเลิกการเชื่อม LINE แล้ว')
     loadSession()
   }
+  let myName = (session.user?.name ?? '')
+  async function saveName() {
+    if (!myName.trim()) return toast('ใส่ชื่อก่อนครับ', 'error')
+    try {
+      await api.patch('/me', { name: myName.trim() })
+      await loadSession()
+      toast('บันทึกชื่อแล้ว', 'success')
+    } catch (e: any) {
+      toast(e.message, 'error')
+    }
+  }
+
   async function changePin() {
     if (!oldPin || !newPin) return toast('กรอก PIN เดิมและ PIN ใหม่ก่อน', 'error')
     try {
@@ -116,6 +128,13 @@
     {:else}
       <button class="btn primary mt" onclick={getLineCode}>ขอรหัสเชื่อม LINE</button>
     {/if}
+  </div>
+
+  <div class="card mt">
+    <h3>ชื่อของฉัน</h3>
+    <label for="myname">ชื่อที่แสดงในแอป</label>
+    <input id="myname" bind:value={myName} placeholder="เช่น ลุงสมชาย" />
+    <button class="btn ghost mt" onclick={saveName}>บันทึกชื่อ</button>
   </div>
 
   <div class="card mt">

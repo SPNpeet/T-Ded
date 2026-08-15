@@ -219,6 +219,22 @@ pub async fn logout(State(st): State<AppState>, user: AuthUser, headers: axum::h
     Ok(Json(json!({ "ok": true })))
 }
 
+#[derive(Deserialize)]
+pub struct UpdateMeReq {
+    pub name: Option<String>,
+}
+
+/// แก้ชื่อของตัวเอง
+pub async fn update_me(State(st): State<AppState>, user: AuthUser, Json(req): Json<UpdateMeReq>) -> ApiResult<Json<Value>> {
+    if let Some(name) = req.name.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+        if name.chars().count() > 60 {
+            return Err(AppError::BadRequest("ชื่อยาวเกินไป".into()));
+        }
+        sqlx::query("UPDATE users SET name = ? WHERE id = ?").bind(name).bind(&user.id).execute(&st.db).await?;
+    }
+    Ok(Json(user_json(&st, &user.id).await?))
+}
+
 pub async fn me(State(st): State<AppState>, user: AuthUser) -> ApiResult<Json<Value>> {
     Ok(Json(user_json(&st, &user.id).await?))
 }
