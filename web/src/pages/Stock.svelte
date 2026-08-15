@@ -29,7 +29,7 @@
     try {
       data = (await cachedGet(`/farms/${farm()!.id}/stock`)).data
       if (!f.bag_kg) f.bag_kg = String(data.bag_kg)
-      try { products = (await cachedGet('/feed-products')).data } catch {}
+      try { products = (await cachedGet('/feed-products')).data } catch { try { products = await fetch(import.meta.env.BASE_URL + 'feed-products.json').then((r) => r.json()) } catch {} }
     } catch (e: any) {
       toast(e.message, 'error')
     }

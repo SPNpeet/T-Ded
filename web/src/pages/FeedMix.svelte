@@ -32,7 +32,7 @@
     const e = await engine()
     ingredients = e.nutrition_ingredients() as any[]
     tips = e.nutrition_tips() as [string, string][]
-    try { products = (await cachedGet('/feed-products')).data } catch {}
+    try { products = (await cachedGet('/feed-products')).data } catch { try { products = await fetch(import.meta.env.BASE_URL + 'feed-products.json').then((r) => r.json()) } catch {} }
   })
   const targetOf = (c: string) => (c === 'catfish' ? 'catfish' : 'tilapia')
   const brands = $derived([...new Set(products.map((p) => p.brand))])

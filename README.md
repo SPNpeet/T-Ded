@@ -38,6 +38,10 @@ cargo run --release -p teedet-server   # http://localhost:8787 (เสิร์�
 - หลังบ้าน: `/api/admin/farms`, `/api/admin/rules`, `/api/admin/species/{code}`, `/api/admin/users`, `/api/announcements`
 - LINE: `POST /api/line/webhook` (พิมพ์ "สรุป", "บ่อ1 ให้แล้ว 12", "บ่อ2 ตาย 5", "ผูก 123456")
 
+## โฮสต์และ LINE
+
+ดู [DEPLOY.md](DEPLOY.md) — หน้าเครื่องคำนวณสาธารณะฟรีถาวรอยู่ที่ https://spnpeet.github.io/T-Ded/ ส่วนระบบเต็มขึ้น Fly.io/Render ได้ด้วย Dockerfile ที่เตรียมไว้ และ LINE ตั้งค่าได้จากหน้าแอดมินในแอป
+
 ## มือถือ
 
 - PWA: เปิดเว็บ (ต้องเป็น HTTPS) แล้ว "เพิ่มไปยังหน้าจอโฮม" ใช้งานออฟไลน์ได้ ข้อมูลที่บันทึกตอนไม่มีสัญญาณจะส่งให้เมื่อออนไลน์

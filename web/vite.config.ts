@@ -10,7 +10,7 @@ export default defineConfig({
     svelte(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/*.png', 'mark.png', 'logo-full.png'],
+      includeAssets: ['icons/*.png', 'mark.png', 'logo-full.png', 'feed-products.json'],
       manifest: {
         name: 'ทีเด็ดปลาน้ำจืด',
         short_name: 'ทีเด็ดปลา',
@@ -35,7 +35,7 @@ export default defineConfig({
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
-        globPatterns: ['**/*.{js,css,html,svg,png,wasm,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,wasm,woff2,json}'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         navigateFallback: base + 'index.html',
         navigateFallbackDenylist: [/^\/api\//],
