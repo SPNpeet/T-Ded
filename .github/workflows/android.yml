@@ -8,6 +8,9 @@ on:
       - 'crates/aqua-engine/**'
       - '.github/workflows/android.yml'
 
+permissions:
+  contents: write
+
 jobs:
   apk:
     runs-on: ubuntu-latest
