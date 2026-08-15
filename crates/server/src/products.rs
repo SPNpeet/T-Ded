@@ -13,22 +13,54 @@ use crate::{
 
 const SEED: &str = include_str!("../seed/feed_products.json");
 
-/// ใส่ข้อมูลตั้งต้นครั้งเดียว (ถ้าตารางว่าง)
+/// ซิงก์แคตตาล็อกกลางจากไฟล์ทุกครั้งที่เริ่มระบบ (แถวที่หน่วยงานแก้เองจะไม่ถูกทับ)
 pub async fn seed_if_empty(st: &AppState) -> ApiResult<()> {
-    let n: i64 = sqlx::query("SELECT COUNT(*) AS n FROM feed_products").fetch_one(&st.db).await?.get("n");
-    if n > 0 {
-        return Ok(());
-    }
     let items: Vec<Value> = serde_json::from_str(SEED)?;
+    let mut n = 0;
     for it in items {
-        insert_product(st, None, &it, None).await?;
+        let code = it.get("product_code").and_then(|v| v.as_str()).unwrap_or("");
+        let brand = it.get("brand").and_then(|v| v.as_str()).unwrap_or("");
+        let id = format!("seed:{brand}:{code}");
+        let existing = sqlx::query("SELECT id, updated_by FROM feed_products WHERE id = ?").bind(&id).fetch_optional(&st.db).await?;
+        match existing {
+            // เคยมีและยังไม่มีใครแก้ -> อัปเดตให้ตรงไฟล์ล่าสุด
+            Some(r) if r.get::<Option<String>, _>("updated_by").is_none() => {
+                update_from_seed(st, &id, &it).await?;
+                n += 1;
+            }
+            Some(_) => {}
+            None => {
+                insert_product_with_id(st, &id, None, &it, None).await?;
+                n += 1;
+            }
+        }
     }
-    tracing::info!("feed products seeded");
+    // ลบแถวที่ค้างจากการ seed แบบเก่า (id เป็น uuid และไม่มีคนแก้)
+    sqlx::query("DELETE FROM feed_products WHERE org_id IS NULL AND updated_by IS NULL AND id NOT LIKE 'seed:%'").execute(&st.db).await?;
+    tracing::info!(synced = n, "feed products catalog synced");
+    Ok(())
+}
+
+async fn update_from_seed(st: &AppState, id: &str, b: &Value) -> ApiResult<()> {
+    let s = |k: &str| b.get(k).and_then(|v| v.as_str()).map(|x| x.to_string());
+    let f = |k: &str| b.get(k).and_then(|v| v.as_f64());
+    sqlx::query("UPDATE feed_products SET brand = ?, product_code = ?, name_th = ?, target = ?, stage_th = ?, weight_from_g = ?, weight_to_g = ?, protein_pct = ?, fat_pct = ?, pellet_mm = ?, form = ?, bag_kg = ?, price_ref = ?, source_url = ?, verified = ?, note = ?, active = 1, updated_at = ? WHERE id = ?")
+        .bind(s("brand")).bind(s("product_code")).bind(s("name_th")).bind(s("target").unwrap_or_else(|| "all".into())).bind(s("stage_th"))
+        .bind(f("weight_from_g")).bind(f("weight_to_g")).bind(f("protein_pct")).bind(f("fat_pct")).bind(f("pellet_mm"))
+        .bind(s("form")).bind(f("bag_kg")).bind(f("price_ref")).bind(s("source_url"))
+        .bind(b.get("verified").and_then(|v| v.as_i64().or_else(|| v.as_bool().map(|x| x as i64))).unwrap_or(0))
+        .bind(s("note")).bind(now_iso()).bind(id)
+        .execute(&st.db)
+        .await?;
     Ok(())
 }
 
 async fn insert_product(st: &AppState, org_id: Option<&str>, b: &Value, user: Option<&str>) -> ApiResult<String> {
-    let id = new_id();
+    insert_product_with_id(st, &new_id(), org_id, b, user).await
+}
+
+async fn insert_product_with_id(st: &AppState, id: &str, org_id: Option<&str>, b: &Value, user: Option<&str>) -> ApiResult<String> {
+    let id = id.to_string();
     let s = |k: &str| b.get(k).and_then(|v| v.as_str()).map(|x| x.to_string());
     let f = |k: &str| b.get(k).and_then(|v| v.as_f64());
     let brand = s("brand").ok_or_else(|| AppError::BadRequest("กรอกยี่ห้อ".into()))?;

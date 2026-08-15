@@ -2,7 +2,7 @@
   import { onMount } from 'svelte'
   import { cachedGet } from '../lib/api'
   import { currentFarm, session, toast } from '../lib/ui.svelte'
-  import { n, n1, baht, pct } from '../lib/format'
+  import { n, n1, baht, bahtShort, pct } from '../lib/format'
   import TopBar from '../lib/TopBar.svelte'
 
   let items: any[] = $state([])
@@ -51,10 +51,10 @@
     <section class="hero">
       <div class="muted small">ภาพรวมทุกบ่อที่เลี้ยงอยู่</div>
       <div class="kpi mt" style="--paper:rgba(255,255,255,0.1)">
-        <div class="k" style="background:rgba(255,255,255,0.12)"><div class="lbl" style="color:rgba(255,255,255,0.75)">มูลค่าปลาในบ่อ</div><div class="val" style="color:#fff">{baht(totalValue)}</div></div>
-        <div class="k" style="background:rgba(255,255,255,0.12)"><div class="lbl" style="color:rgba(255,255,255,0.75)">ต้นทุนสะสม</div><div class="val" style="color:#fff">{baht(totalCost)}</div></div>
-        <div class="k" style="background:rgba(255,255,255,0.12)"><div class="lbl" style="color:rgba(255,255,255,0.75)">กำไรคาดการณ์เมื่อจับ</div><div class="val" style="color:#fff">{baht(projProfit)}</div></div>
-        <div class="k" style="background:rgba(255,255,255,0.12)"><div class="lbl" style="color:rgba(255,255,255,0.75)">ขายแล้ว</div><div class="val" style="color:#fff">{baht(totalRevenue)}</div></div>
+        <div class="k" style="background:rgba(255,255,255,0.12)"><div class="lbl" style="color:rgba(255,255,255,0.85)">มูลค่าปลาในบ่อ (บาท)</div><div class="val" style="color:#fff">{bahtShort(totalValue)}</div></div>
+        <div class="k" style="background:rgba(255,255,255,0.12)"><div class="lbl" style="color:rgba(255,255,255,0.85)">ต้นทุนสะสม (บาท)</div><div class="val" style="color:#fff">{bahtShort(totalCost)}</div></div>
+        <div class="k" style="background:rgba(255,255,255,0.12)"><div class="lbl" style="color:rgba(255,255,255,0.85)">กำไรคาดเมื่อจับ (บาท)</div><div class="val" style="color:#fff">{bahtShort(projProfit)}</div></div>
+        <div class="k" style="background:rgba(255,255,255,0.12)"><div class="lbl" style="color:rgba(255,255,255,0.85)">ขายแล้ว (บาท)</div><div class="val" style="color:#fff">{bahtShort(totalRevenue)}</div></div>
       </div>
     </section>
     {#if bench?.n_crops > 1}
@@ -65,11 +65,11 @@
       <a class="card" href="#/pond/{s.crop.id}/money" style="display:block;text-decoration:none;color:inherit;margin-top:12px">
         <div class="row" style="justify-content:space-between"><h3>{s.crop.pond_name}</h3><span class="pill neutral">วันที่ {s.day}</span></div>
         <div class="kpi mt">
-          <div class="k"><div class="lbl">FCR</div><div class="val">{p.fcr ?? '-'}</div><div class="tiny muted">{p.fcr_grade_th ?? ''}{bench?.fcr_avg && p.fcr ? (p.fcr <= bench.fcr_avg ? ' · ดีกว่ากลุ่ม' : ' · แย่กว่ากลุ่ม') : ''}</div></div>
+          <div class="k"><div class="lbl">FCR</div><div class="val">{p.fcr ?? 'ยังไม่มี'}</div><div class="tiny muted">{p.fcr_grade_th ?? ''}{bench?.fcr_avg && p.fcr ? (p.fcr <= bench.fcr_avg ? ' · ดีกว่ากลุ่ม' : ' · แย่กว่ากลุ่ม') : ''}</div></div>
           <div class="k"><div class="lbl">รอด</div><div class="val">{pct(p.survival_pct, 1)}</div></div>
-          <div class="k"><div class="lbl">ต้นทุน/กก.</div><div class="val">{p.cost_per_kg ? n1(p.cost_per_kg) : '-'}</div></div>
-          <div class="k"><div class="lbl">มูลค่าในบ่อ</div><div class="val">{p.stock_value != null ? baht(p.stock_value) : '-'}</div></div>
-          {#if s.projection}<div class="k"><div class="lbl">กำไรคาด</div><div class="val" style="color:{s.projection.profit >= 0 ? 'var(--green)' : 'var(--red)'}">{baht(s.projection.profit)}</div><div class="tiny muted">อีก {s.projection.days_remaining} วัน</div></div>{/if}
+          <div class="k"><div class="lbl">ต้นทุน/กก. (บาท)</div><div class="val">{p.cost_per_kg ? n1(p.cost_per_kg) : 'ยังไม่มีข้อมูล'}</div></div>
+          <div class="k"><div class="lbl">มูลค่าในบ่อ (บาท)</div><div class="val">{p.stock_value != null ? bahtShort(p.stock_value) : 'ใส่ราคาขายก่อน'}</div></div>
+          {#if s.projection}<div class="k"><div class="lbl">กำไรคาด (บาท)</div><div class="val" style="color:{s.projection.profit >= 0 ? 'var(--green)' : 'var(--red)'}">{s.market_price_per_kg || s.projection.revenue > 0 ? bahtShort(s.projection.profit) : 'ใส่ราคาขายก่อน'}</div><div class="tiny muted">อีก {s.projection.days_remaining} วัน</div></div>{/if}
         </div>
       </a>
     {/each}

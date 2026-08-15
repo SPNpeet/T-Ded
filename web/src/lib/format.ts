@@ -83,3 +83,17 @@ export function expenseLabel(cat: string) {
   return EXPENSE_CATEGORIES.find((c) => c[0] === cat)?.[1] ?? cat
 }
 export const PROVINCES = ['เชียงราย', 'เชียงใหม่', 'พะเยา', 'ลำปาง', 'ลำพูน', 'แพร่', 'น่าน', 'อุตรดิตถ์', 'พิษณุโลก', 'นครสวรรค์', 'ขอนแก่น', 'อุดรธานี', 'นครราชสีมา', 'สกลนคร', 'อุบลราชธานี', 'สุพรรณบุรี', 'นครปฐม', 'ราชบุรี', 'ฉะเชิงเทรา', 'ปราจีนบุรี', 'ชลบุรี', 'สมุทรปราการ', 'กรุงเทพมหานคร', 'นครศรีธรรมราช', 'สงขลา', 'สุราษฎร์ธานี', 'อื่น ๆ']
+
+/** เงินแบบสั้นสำหรับช่องแคบ: 33,094 -> 33,094 ; 1,250,000 -> 1.25 ล้าน */
+export function bahtShort(v: number | null | undefined): string {
+  if (v === null || v === undefined || isNaN(v as number)) return '-'
+  const a = Math.abs(v)
+  if (a >= 1000000) return (v < 0 ? '-' : '') + n(a / 1000000, 2) + ' ล้าน'
+  return n(v, 0)
+}
+/** วันที่แบบสั้นพร้อมปี 2 หลัก เช่น 1 ม.ค. 70 */
+export function thDateShort(iso?: string | null): string {
+  if (!iso) return '-'
+  const y = Number(iso.slice(0, 4))
+  return thDate(iso, false) + ' ' + String((y + 543) % 100).padStart(2, '0')
+}

@@ -2,7 +2,7 @@
   import { onMount } from 'svelte'
   import { api, cachedGet } from '../lib/api'
   import { go, toast } from '../lib/ui.svelte'
-  import { thDate, thDateTime, n, n1, n2, baht, pct, bandPill, expenseLabel, addDays, healthColor } from '../lib/format'
+  import { thDate, thDateShort, thDateTime, n, n1, n2, baht, bahtShort, pct, bandPill, expenseLabel, addDays, healthColor } from '../lib/format'
   import TopBar from '../lib/TopBar.svelte'
   import ScoreRing from '../lib/ScoreRing.svelte'
   import LineChart from '../lib/LineChart.svelte'
@@ -328,14 +328,16 @@
       <div class="card mt">
         <h3>ผลงานรุ่นนี้ถึงวันนี้</h3>
         <div class="kpi mt">
-          <div class="k"><div class="lbl">อัตราแลกเนื้อ (FCR)</div><div class="val">{p.fcr ?? '-'} <span class="small muted">{p.fcr_grade_th ?? ''}</span></div></div>
-          <div class="k"><div class="lbl">ชีวมวลในบ่อ</div><div class="val">{n(p.biomass_kg)} กก.</div></div>
-          <div class="k"><div class="lbl">ต้นทุนสะสม</div><div class="val">{baht(s.totals.cost_total)}</div></div>
-          <div class="k"><div class="lbl">ต้นทุน/กก. ที่ผลิตได้</div><div class="val">{p.cost_per_kg ? baht(p.cost_per_kg) : '-'}</div></div>
-          <div class="k"><div class="lbl">มูลค่าปลาในบ่อวันนี้</div><div class="val">{p.stock_value != null ? baht(p.stock_value) : '-'}</div></div>
-          <div class="k"><div class="lbl">กำไรถ้าจับวันนี้</div><div class="val" style="color:{(p.profit_if_harvest_today ?? 0) >= 0 ? 'var(--green)' : 'var(--red)'}">{p.profit_if_harvest_today != null ? baht(p.profit_if_harvest_today) : '-'}</div></div>
+          <div class="k"><div class="lbl">อัตราแลกเนื้อ (FCR)</div><div class="val">{p.fcr ?? 'ยังไม่มีข้อมูล'}</div>{#if p.fcr_grade_th}<div class="tiny muted">{p.fcr_grade_th}</div>{:else}<div class="tiny muted">ต้องบันทึกอาหารและชั่งก่อน</div>{/if}</div>
+          <div class="k"><div class="lbl">ปลาในบ่อ (กก.)</div><div class="val">{n(p.biomass_kg)}</div><div class="tiny muted">{n(s.alive_count)} ตัว × {n(s.avg_weight_g)} ก.</div></div>
+          <div class="k"><div class="lbl">ต้นทุนสะสม (บาท)</div><div class="val">{bahtShort(s.totals.cost_total)}</div></div>
+          <div class="k"><div class="lbl">ต้นทุน/กก. (บาท)</div><div class="val">{p.cost_per_kg ? n1(p.cost_per_kg) : 'ยังไม่มีข้อมูล'}</div></div>
+          <div class="k"><div class="lbl">มูลค่าปลาในบ่อ (บาท)</div><div class="val">{p.stock_value != null ? bahtShort(p.stock_value) : 'ใส่ราคาขายก่อน'}</div></div>
+          {#if p.profit_if_harvest_today != null}
+            <div class="k"><div class="lbl">กำไรถ้าจับวันนี้ (บาท)</div><div class="val" style="color:{p.profit_if_harvest_today >= 0 ? 'var(--green)' : 'var(--red)'}">{bahtShort(p.profit_if_harvest_today)}</div></div>
+          {/if}
         </div>
-        <p class="tiny muted mt">อาหารสะสม {n1(s.totals.fed_kg)} กก. · ค่าอาหาร {baht(s.totals.feed_cost)} (ราคาเฉลี่ยจากสต๊อก) · ค่าใช้จ่ายอื่น {baht(s.totals.expenses)} · ขายแล้ว {baht(s.totals.revenue)}</p>
+        <p class="small muted mt">อาหารสะสม {n1(s.totals.fed_kg)} กก. · ค่าอาหาร {baht(s.totals.feed_cost)} · ค่าใช้จ่ายอื่น {baht(s.totals.expenses)} · ขายแล้ว {baht(s.totals.revenue)}</p>
       </div>
 
       <div class="card mt">
@@ -348,25 +350,31 @@
         <button class="btn ghost mt" onclick={reproject} disabled={projBusy}>{projBusy ? 'กำลังคำนวณ...' : 'คำนวณใหม่'}</button>
         {#if s.projection}
           {@const pj = s.projection}
+          {@const hasPrice = !!(sellPrice || s.market_price_per_kg)}
           <div class="divider"></div>
-          <div class="card tint-cyan" style="box-shadow:none">
-            <div class="big-number" style="font-size:1.7rem;color:{pj.profit >= 0 ? '#146b3c' : '#8f1f15'}">{pj.profit >= 0 ? 'คาดว่าจะเหลือกำไร' : 'คาดว่าจะขาดทุน'} {baht(Math.abs(pj.profit))}</div>
-            <div class="mt" style="line-height:1.7">
-              เลี้ยงต่ออีก <b>{pj.days_remaining} วัน</b> จับได้ประมาณ <b>{thDate(addDays(s.date, pj.days_remaining))}</b><br />
-              ได้ปลา <b>{n(pj.final_biomass_kg)} กก.</b> ({n(pj.final_count)} ตัว ตัวละ {n(pj.final_avg_weight_g)} ก.)<br />
-              ต้องซื้ออาหารอีก <b>{n1(pj.feed_bags_remaining)} กระสอบ</b> ({baht(pj.feed_cost_remaining)})
+          {#if hasPrice}
+            <div class="card tint-cyan" style="box-shadow:none">
+              <div class="big-number" style="font-size:1.6rem;color:{pj.profit >= 0 ? '#146b3c' : '#8f1f15'}">{pj.profit >= 0 ? 'คาดว่าจะเหลือกำไร' : 'คาดว่าจะขาดทุน'} {baht(Math.abs(pj.profit))}</div>
             </div>
+          {:else}
+            <div class="alert info">ยังไม่ได้ใส่ราคาขาย จึงยังคิดกำไรไม่ได้ — ใส่ราคาขาย/กก. ด้านบนแล้วกด "คำนวณใหม่" หรือดูราคาตลาดที่หน้าราคาปลา</div>
+          {/if}
+          <div class="card flat mt" style="line-height:1.8">
+            เลี้ยงต่ออีก <b>{pj.days_remaining} วัน</b> จับได้ประมาณ <b>{thDateShort(addDays(s.date, pj.days_remaining))}</b><br />
+            ได้ปลา <b>{n(pj.final_biomass_kg)} กก.</b> ({n(pj.final_count)} ตัว ตัวละ {n(pj.final_avg_weight_g)} ก.)<br />
+            ต้องซื้ออาหารอีก <b>{n1(pj.feed_bags_remaining)} กระสอบ</b>{pj.feed_cost_remaining > 0 ? ` (${baht(pj.feed_cost_remaining)})` : ''}
           </div>
-          <div class="mt2">
-            <MoneyBars rows={[
-              { label: 'ขายปลาได้ (คาด)', value: pj.revenue, color: 'var(--green)', note: `ราคา ${n(sellPrice ? parseFloat(sellPrice) : (s.market_price_per_kg ?? 0))} บาท/กก.` },
-              { label: 'จ่ายไปแล้ว', value: s.totals.cost_total, color: 'var(--navy-2)', note: `อาหาร ${baht(s.totals.feed_cost)} + อื่น ๆ ${baht(s.totals.expenses)}` },
-              { label: 'ต้องจ่ายอีก', value: pj.cost_remaining, color: 'var(--amber)', note: 'อาหารและค่าใช้จ่ายรายวันจนถึงวันจับ' },
-              { label: pj.profit >= 0 ? 'เหลือกำไร' : 'ขาดทุน', value: Math.abs(pj.profit), color: pj.profit >= 0 ? 'var(--green)' : 'var(--red)', note: `คุ้มทุนเมื่อขายได้อย่างน้อย ${n2(pj.breakeven_price_per_kg)} บาท/กก.` },
-            ]} />
-          </div>
-          <div class="mt2"><Timeline total={s.day + pj.days_remaining} today={s.day} marks={[{ day: 0, label: 'ปล่อย', sub: thDate(s.crop.stocked_at, false) }, { day: s.day, label: 'วันนี้', sub: `${n(s.avg_weight_g)} ก.` }, { day: s.day + pj.days_remaining, label: 'จับขาย', sub: thDate(addDays(s.date, pj.days_remaining), false) }]} /></div>
-          {#if !sellPrice && !s.market_price_per_kg}<div class="alert info small mt">ใส่ราคาขายเพื่อดูกำไรคาดการณ์ หรือดูราคาตลาดที่หน้าราคาปลา</div>{/if}
+          {#if hasPrice}
+            <div class="mt2">
+              <MoneyBars rows={[
+                { label: 'ขายปลาได้ (คาด)', value: pj.revenue, color: 'var(--green)', note: `ราคา ${n(sellPrice ? parseFloat(sellPrice) : (s.market_price_per_kg ?? 0))} บาท/กก.` },
+                { label: 'จ่ายไปแล้ว', value: s.totals.cost_total, color: 'var(--navy-2)', note: `อาหาร ${baht(s.totals.feed_cost)} + อื่น ๆ ${baht(s.totals.expenses)}` },
+                { label: 'ต้องจ่ายอีก', value: pj.cost_remaining, color: 'var(--amber)', note: 'อาหารและค่าใช้จ่ายรายวันจนถึงวันจับ' },
+                { label: pj.profit >= 0 ? 'เหลือกำไร' : 'ขาดทุน', value: Math.abs(pj.profit), color: pj.profit >= 0 ? 'var(--green)' : 'var(--red)', note: `คุ้มทุนเมื่อขายได้อย่างน้อย ${n2(pj.breakeven_price_per_kg)} บาท/กก.` },
+              ]} />
+            </div>
+          {/if}
+          <div class="mt2"><Timeline total={s.day + pj.days_remaining} today={s.day} marks={[{ day: 0, label: 'ปล่อย', sub: thDateShort(s.crop.stocked_at) }, { day: s.day, label: 'วันนี้', sub: `${n(s.avg_weight_g)} ก.` }, { day: s.day + pj.days_remaining, label: 'จับขาย', sub: thDateShort(addDays(s.date, pj.days_remaining)) }]} /></div>
           {#if pj.curve?.length > 1}
             <div class="mt2"><Collapse title="ดูกราฟ (สำหรับผู้ที่ต้องการรายละเอียด)">
               <LineChart series={[{ name: 'น้ำหนักเฉลี่ย (ก.)', color: '#0e8ea7', points: pj.curve.map((c: any) => ({ x: c.day, y: c.avg_weight_g })) }]} height={170} xLabel={(x) => `วัน ${Math.round(x)}`} />
