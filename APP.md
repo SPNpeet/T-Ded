@@ -10,7 +10,14 @@
 | **iOS ลงเครื่องตัวเอง** | **ได้วันนี้ (ต้องใช้ Mac)** | 0 บาท | เฉพาะเครื่องที่เสียบกับ Mac อายุ 7 วันต่อครั้ง |
 | **iOS ผ่าน TestFlight / App Store** | ไม่ทันวันนี้ | 99 USD/ปี | ทุกคน (TestFlight รีวิว ~1 วัน, App Store 1-3 วัน) |
 
-## 1. Android APK (ทำในคลาวด์ ไม่ต้องลงอะไรในเครื่อง)
+## 1. Android APK — พร้อมติดตั้งแล้ว
+
+**ลิงก์ดาวน์โหลดตรง (เปิดบนมือถือ Android ได้เลย ไม่ต้องล็อกอิน GitHub):**
+
+https://github.com/SPNpeet/T-Ded/releases/latest
+
+ไฟล์ `teedet-pla.apk` ขนาด 6.5 MB
+
 
 ไฟล์ APK ถูก build อัตโนมัติทุกครั้งที่ push ผ่าน `.github/workflows/android.yml`
 
