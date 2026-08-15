@@ -1,8 +1,8 @@
 [package]
 name = "aqua-engine"
-version.workspace = true
-edition.workspace = true
-license.workspace = true
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
 description = "Domain rules for freshwater fish farming: feeding, growth, environment adjustment, FCR, forecast, simulation, pond health"
 
 [lib]
