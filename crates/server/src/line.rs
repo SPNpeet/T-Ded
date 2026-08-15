@@ -23,10 +23,10 @@ fn verify_signature(secret: &str, body: &[u8], signature: &str) -> bool {
 }
 
 pub async fn push_text(st: &AppState, line_user_id: &str, text: &str) -> ApiResult<()> {
-    let Some(token) = st.cfg.line_token.as_ref() else { return Ok(()) };
+    let Some(token) = crate::settings::line_token(st).await else { return Ok(()) };
     st.http
         .post("https://api.line.me/v2/bot/message/push")
-        .bearer_auth(token)
+        .bearer_auth(&token)
         .json(&json!({ "to": line_user_id, "messages": [{ "type": "text", "text": text }] }))
         .send()
         .await?;
@@ -34,7 +34,7 @@ pub async fn push_text(st: &AppState, line_user_id: &str, text: &str) -> ApiResu
 }
 
 async fn reply_text(st: &AppState, reply_token: &str, text: &str) -> ApiResult<()> {
-    let Some(token) = st.cfg.line_token.as_ref() else { return Ok(()) };
+    let Some(token) = crate::settings::line_token(st).await else { return Ok(()) };
     st.http
         .post("https://api.line.me/v2/bot/message/reply")
         .bearer_auth(token)
@@ -48,7 +48,7 @@ async fn reply_text(st: &AppState, reply_token: &str, text: &str) -> ApiResult<(
 pub async fn link_code(State(st): State<AppState>, user: AuthUser) -> ApiResult<Json<Value>> {
     let code = format!("{:06}", rand::random::<u32>() % 1_000_000);
     sqlx::query("UPDATE users SET line_link_code = ? WHERE id = ?").bind(&code).bind(&user.id).execute(&st.db).await?;
-    Ok(Json(json!({ "code": code, "bot_configured": st.cfg.line_token.is_some(), "add_friend_url": st.cfg.line_add_friend_url })))
+    Ok(Json(json!({ "code": code, "bot_configured": crate::settings::line_token(&st).await.is_some(), "add_friend_url": crate::settings::line_add_friend(&st).await })))
 }
 
 pub async fn unlink(State(st): State<AppState>, user: AuthUser) -> ApiResult<Json<Value>> {
@@ -57,9 +57,9 @@ pub async fn unlink(State(st): State<AppState>, user: AuthUser) -> ApiResult<Jso
 }
 
 pub async fn webhook(State(st): State<AppState>, headers: HeaderMap, body: Bytes) -> ApiResult<Json<Value>> {
-    let Some(secret) = st.cfg.line_secret.as_ref() else { return Err(AppError::BadRequest("LINE ยังไม่ได้ตั้งค่า".into())) };
+    let Some(secret) = crate::settings::line_secret(&st).await else { return Err(AppError::BadRequest("LINE ยังไม่ได้ตั้งค่า".into())) };
     let sig = headers.get("x-line-signature").and_then(|v| v.to_str().ok()).unwrap_or("");
-    if !verify_signature(secret, &body, sig) {
+    if !verify_signature(&secret, &body, sig) {
         return Err(AppError::Forbidden);
     }
     let payload: Value = serde_json::from_slice(&body)?;

@@ -1,4 +1,5 @@
 <script lang="ts">
+  const BASE = import.meta.env.BASE_URL
   import { session, currentFarm, logout, isStaff, ui } from '../lib/ui.svelte'
   import Icon from '../lib/Icon.svelte'
   import { FONT_SIZES, getFontSize, getHighContrast, setFontSize, setHighContrast } from '../lib/prefs'
@@ -16,7 +17,7 @@
   ]
 </script>
 
-<header class="topbar"><div class="brand"><img src="/mark.png" alt="" />เพิ่มเติม</div></header>
+<header class="topbar"><div class="brand"><img src="{BASE}mark.png" alt="" />เพิ่มเติม</div></header>
 <main class="page">
   <div class="card">
     <div class="row"><div style="flex:1"><b>{session.user?.name}</b><div class="small muted">{session.user?.phone} · {session.user?.role === 'owner' ? 'เจ้าของฟาร์ม' : session.user?.role === 'worker' ? 'คนงาน' : session.user?.role === 'officer' ? 'เจ้าหน้าที่ส่งเสริม' : 'ผู้ดูแลระบบ'}</div><div class="small muted">{currentFarm()?.name ?? ''} · {session.user?.org_name}</div></div></div>

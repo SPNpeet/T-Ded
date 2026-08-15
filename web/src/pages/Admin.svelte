@@ -19,6 +19,35 @@
   let editSpecies: any = $state(null)
   let editRules: any[] = $state([])
   let filter = $state('')
+  let lineStatus: any = $state(null)
+  let lineForm = $state({ channel_secret: '', channel_access_token: '', add_friend_url: '' })
+  async function saveLine() {
+    busy = true
+    try {
+      const body: any = {}
+      for (const k of ['channel_secret', 'channel_access_token', 'add_friend_url'] as const) if ((lineForm as any)[k]) body[k] = (lineForm as any)[k]
+      if (!Object.keys(body).length) return toast('ยังไม่ได้กรอกอะไร', 'error')
+      await api.post('/admin/line', body)
+      toast('บันทึกการตั้งค่า LINE แล้ว', 'success')
+      lineForm = { channel_secret: '', channel_access_token: '', add_friend_url: '' }
+      load()
+    } catch (e: any) {
+      toast(e.message, 'error')
+    } finally {
+      busy = false
+    }
+  }
+  async function testLine() {
+    try {
+      await api.post('/admin/line/test')
+      toast('ส่งข้อความทดสอบไปที่ LINE ของคุณแล้ว', 'success')
+    } catch (e: any) {
+      toast(e.message, 'error')
+    }
+  }
+  async function copyText(t: string) {
+    try { await navigator.clipboard.writeText(t); toast('คัดลอกแล้ว', 'success') } catch { toast('คัดลอกไม่ได้ กดค้างเพื่อคัดลอกเอง', 'error') }
+  }
   let products: any[] = $state([])
   let editProd: any = $state(null)
   async function saveProd() {
@@ -53,6 +82,7 @@
       if (sub === 'users') users = await api.get('/admin/users')
       if (sub === 'audit') audit = await api.get('/admin/audit?limit=200')
       if (sub === 'products') products = await api.get('/feed-products')
+      if (sub === 'line') lineStatus = await api.get('/admin/line')
     } catch (e: any) {
       toast(e.message, 'error')
     }
@@ -68,6 +98,7 @@
     ['rules', 'กติกาปรับ'],
     ['species', 'ตารางปลา'],
     ['products', 'ยี่ห้ออาหาร'],
+    ['line', 'LINE'],
     ['users', 'ผู้ใช้'],
     ['announce', 'ประกาศ'],
     ['audit', 'ประวัติแก้ไข'],
@@ -227,6 +258,51 @@
           {/if}
         </div>
       {/each}
+    {/if}
+
+    {#if sub === 'line'}
+      {#if lineStatus}
+        <div class="card mt {lineStatus.configured ? 'tint-green' : 'tint-amber'}">
+          <h3>{lineStatus.configured ? 'เชื่อมต่อ LINE OA แล้ว' : 'ยังไม่ได้ตั้งค่า LINE OA'}</h3>
+          <div class="kpi mt">
+            <div class="k"><div class="lbl">Channel secret</div><div class="val">{lineStatus.has_secret ? lineStatus.secret_masked : 'ยังไม่มี'}</div></div>
+            <div class="k"><div class="lbl">Access token</div><div class="val">{lineStatus.has_token ? lineStatus.token_masked : 'ยังไม่มี'}</div></div>
+            <div class="k"><div class="lbl">ผู้ใช้ที่ผูก LINE</div><div class="val">{lineStatus.linked_users} คน</div></div>
+            <div class="k"><div class="lbl">ส่งข้อความแล้ว</div><div class="val">{lineStatus.messages_sent}</div></div>
+          </div>
+          {#if lineStatus.configured}<div class="grid2 mt"><button class="btn ghost" onclick={testLine}>ส่งข้อความทดสอบหาตัวเอง</button><button class="btn ghost" onclick={morning}>ส่งสรุปเช้าเดี๋ยวนี้</button></div>{/if}
+        </div>
+        <div class="card mt">
+          <h3>วิธีตั้งค่า (ทำครั้งเดียว)</h3>
+          <div class="reason"><span><b>1.</b> สร้าง LINE Official Account ฟรีที่ <a href="https://manager.line.biz" target="_blank" rel="noopener">manager.line.biz</a> แล้วเปิด Messaging API ให้บัญชีนั้น</span></div>
+          <div class="reason"><span><b>2.</b> เข้า <a href="https://developers.line.biz/console/" target="_blank" rel="noopener">developers.line.biz</a> เลือก channel ที่ผูกกับ OA คัดลอก <b>Channel secret</b> (แท็บ Basic settings) และ <b>Channel access token (long-lived)</b> (แท็บ Messaging API กด Issue)</span></div>
+          <div class="reason"><span><b>3.</b> วางทั้งสองค่าในช่องด้านล่างแล้วกดบันทึก</span></div>
+          <div class="reason"><span><b>4.</b> ในหน้า Messaging API ของ LINE ใส่ Webhook URL ด้านล่างนี้ แล้วเปิด "Use webhook" และปิด "Auto-reply messages"</span></div>
+          {#if lineStatus.webhook_url}
+            <div class="card tint-cyan mt" style="box-shadow:none"><div class="small">Webhook URL</div><div class="bold" style="word-break:break-all">{lineStatus.webhook_url}</div><button class="btn ghost sm mt" onclick={() => copyText(lineStatus.webhook_url)}>คัดลอก</button></div>
+          {:else}
+            <div class="alert warn small mt">ยังไม่ได้ตั้งค่า PUBLIC_BASE_URL ที่เซิร์ฟเวอร์ Webhook URL คือ (ที่อยู่เว็บของคุณ)/api/line/webhook</div>
+          {/if}
+        </div>
+        <div class="card mt">
+          <h3>ใส่ค่า</h3>
+          <label>Channel secret</label><input bind:value={lineForm.channel_secret} placeholder={lineStatus.has_secret ? 'มีค่าอยู่แล้ว (กรอกเพื่อเปลี่ยน)' : 'วางค่าจาก LINE Developers'} />
+          <label>Channel access token (long-lived)</label><textarea bind:value={lineForm.channel_access_token} placeholder={lineStatus.has_token ? 'มีค่าอยู่แล้ว (กรอกเพื่อเปลี่ยน)' : 'วางค่าจาก LINE Developers'}></textarea>
+          <label>ลิงก์เพิ่มเพื่อน OA <span class="hint">(เช่น https://lin.ee/xxxx)</span></label><input bind:value={lineForm.add_friend_url} placeholder={lineStatus.add_friend_url ?? 'ไม่บังคับ'} />
+          <button class="btn primary mt" onclick={saveLine} disabled={busy}>บันทึกการตั้งค่า LINE</button>
+          <p class="small muted mt">ระบบเก็บค่าไว้ในฐานข้อมูล (ไม่ต้องแก้ไฟล์ .env) และแสดงเฉพาะบางส่วนของ token เพื่อความปลอดภัย</p>
+        </div>
+        <div class="card mt">
+          <h3>สิ่งที่เกษตรกรทำได้ทาง LINE</h3>
+          <div class="reason"><span>รับสรุปอาหารทุกเช้า 06:00 น. อัตโนมัติ</span></div>
+          <div class="reason"><span>พิมพ์ "สรุป" ดูอาหารวันนี้ทุกบ่อ</span></div>
+          <div class="reason"><span>พิมพ์ "บ่อ1 ให้แล้ว 12" บันทึกการให้อาหาร</span></div>
+          <div class="reason"><span>พิมพ์ "บ่อ2 ตาย 5" บันทึกปลาตาย · "บ่อ1 ลอยหัว" บันทึกอาการ</span></div>
+          <div class="reason"><span>ผูกบัญชี: ผู้ใช้ขอรหัส 6 หลักในแอป (ตั้งค่า > เชื่อม LINE) แล้วพิมพ์ "ผูก 123456" ในแชท</span></div>
+        </div>
+      {:else}
+        <div class="skeleton mt" style="min-height:120px"></div>
+      {/if}
     {/if}
 
     {#if sub === 'products'}

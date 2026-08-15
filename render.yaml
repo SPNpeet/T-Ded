@@ -1,0 +1,27 @@
+# Render.com — free web service (หลับเมื่อไม่มีคนใช้ ~15 นาที ตื่นเองเมื่อมีคนเข้า)
+# หมายเหตุ: ดิสก์ถาวรบน Render เป็นบริการเสียเงิน ถ้าใช้ฟรีล้วน ให้ใช้ Fly.io แทนสำหรับข้อมูลถาวร
+services:
+  - type: web
+    name: teedet-pla
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: WEB_DIR
+        value: /app/web/dist
+      - key: DATABASE_URL
+        value: sqlite:///data/teedet.db
+      - key: ADMIN_PHONE
+        sync: false
+      - key: ADMIN_PIN
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false
+    disk:
+      name: teedet-data
+      mountPath: /data
+      sizeGB: 1

@@ -1,0 +1,52 @@
+name: Deploy calculators (GitHub Pages)
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: jetli/wasm-pack-action@v0.4.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Build engine (WASM)
+        run: wasm-pack build crates/aqua-engine --target web --release --out-dir ../../web/src/engine-pkg --out-name aqua_engine -- --features wasm
+      - name: Build web
+        working-directory: web
+        env:
+          VITE_API_BASE: ${{ vars.VITE_API_BASE }}
+          BASE_PATH: /T-Ded/
+        run: |
+          npm ci
+          node scripts/brand.mjs
+          npm run build
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

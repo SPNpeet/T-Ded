@@ -1,4 +1,5 @@
 <script lang="ts">
+  const BASE = import.meta.env.BASE_URL
   import { onMount } from 'svelte'
   import { cachedGet } from '../lib/api'
   import { session, currentFarm, selectFarm, go, isStaff } from '../lib/ui.svelte'
@@ -51,7 +52,7 @@
 </script>
 
 <header class="topbar">
-  <div class="brand"><img src="/mark.png" alt="" />ทีเด็ดปลาน้ำจืด</div>
+  <div class="brand"><img src="{BASE}mark.png" alt="" />ทีเด็ดปลาน้ำจืด</div>
   <div class="spacer"></div>
   {#if (session.user?.farms?.length ?? 0) > 1}
     <select style="min-height:44px;width:auto;padding:6px 10px;border-radius:10px;font-size:0.9rem" value={session.farmId} onchange={(e) => selectFarm((e.target as HTMLSelectElement).value)}>

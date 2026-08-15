@@ -6,6 +6,7 @@ mod db;
 mod error;
 mod line;
 mod products;
+mod settings;
 mod snapshot;
 mod weather;
 
@@ -120,6 +121,8 @@ async fn main() {
         .route("/admin/users", get(admin::list_users))
         .route("/admin/audit", get(admin::audit_list))
         .route("/admin/line/morning", post(line::trigger_morning))
+        .route("/admin/line", get(settings::line_status).post(settings::line_save))
+        .route("/admin/line/test", post(settings::line_test))
         .with_state(state.clone());
 
     let cors = CorsLayer::new()

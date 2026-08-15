@@ -1,0 +1,27 @@
+# Fly.io — ฟรีถ้าใช้เครื่องเล็กสุด (shared-cpu-1x 256MB) + volume 1GB
+app = "teedet-pla"
+primary_region = "sin"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  WEB_DIR = "/app/web/dist"
+  DATABASE_URL = "sqlite:///data/teedet.db"
+  PUBLIC_BASE_URL = "https://teedet-pla.fly.dev"
+
+[[mounts]]
+  source = "teedet_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

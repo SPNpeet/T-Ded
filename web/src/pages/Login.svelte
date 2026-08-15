@@ -1,4 +1,5 @@
 <script lang="ts">
+  const BASE = import.meta.env.BASE_URL
   import { api, setToken } from '../lib/api'
   import { loadSession, toast, go } from '../lib/ui.svelte'
   import { PROVINCES } from '../lib/format'
@@ -61,7 +62,7 @@
 
 <div class="auth-wrap">
   <div class="logo-lockup">
-    <div style="background:#fff;border-radius:22px;padding:14px 18px;box-shadow:var(--shadow)"><img src="/logo-full.png" alt="ทีเด็ดปลาน้ำจืด" style="width:260px;height:auto;display:block" /></div>
+    <div style="background:#fff;border-radius:22px;padding:14px 18px;box-shadow:var(--shadow)"><img src="{BASE}logo-full.png" alt="ทีเด็ดปลาน้ำจืด" style="width:260px;height:auto;display:block" /></div>
   </div>
   <div class="card auth-card">
     <div class="tabs">

@@ -2,7 +2,10 @@ import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const base = process.env.BASE_PATH || '/'
+
 export default defineConfig({
+  base,
   plugins: [
     svelte(),
     VitePWA({
@@ -14,17 +17,17 @@ export default defineConfig({
         description: 'ผู้ช่วยฟาร์มปลาน้ำจืดประจำวัน: อาหาร น้ำ การโต ต้นทุน กำไร',
         lang: 'th',
         dir: 'ltr',
-        start_url: '/',
-        scope: '/',
+        start_url: base,
+        scope: base,
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#F4F7FB',
         theme_color: '#1B2440',
         categories: ['productivity', 'business'],
         icons: [
-          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: '/icons/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: base + 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: base + 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: base + 'icons/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {
@@ -34,7 +37,7 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,svg,png,wasm,woff2}'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
-        navigateFallback: '/index.html',
+        navigateFallback: base + 'index.html',
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {

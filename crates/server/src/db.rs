@@ -20,6 +20,7 @@ const MIGRATIONS: &[(&str, &str)] = &[
     ("0001_init", include_str!("../migrations/0001_init.sql")),
     ("0002_feed_nutrition", include_str!("../migrations/0002_feed_nutrition.sql")),
     ("0003_feed_products", include_str!("../migrations/0003_feed_products.sql")),
+    ("0004_settings", include_str!("../migrations/0004_settings.sql")),
 ];
 
 async fn migrate(pool: &Db) -> anyhow_lite::Result<()> {
