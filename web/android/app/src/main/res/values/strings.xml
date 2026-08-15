@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ทีเด็ดปลาน้ำจืด</string>
+    <string name="title_activity_main">ทีเด็ดปลาน้ำจืด</string>
+    <string name="package_name">com.teedetpla.app</string>
+    <string name="custom_url_scheme">com.teedetpla.app</string>
+</resources>

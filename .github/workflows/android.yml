@@ -1,0 +1,72 @@
+name: Build Android APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'crates/aqua-engine/**'
+      - '.github/workflows/android.yml'
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: jetli/wasm-pack-action@v0.4.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build engine (WASM)
+        run: wasm-pack build crates/aqua-engine --target web --release --out-dir ../../web/src/engine-pkg --out-name aqua_engine -- --features wasm
+
+      - name: Build web
+        working-directory: web
+        env:
+          VITE_API_BASE: ${{ vars.VITE_API_BASE }}
+        run: |
+          npm ci
+          node scripts/brand.mjs
+          npm run build
+
+      - name: Sync Capacitor
+        working-directory: web
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: web/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Rename APK
+        run: cp web/android/app/build/outputs/apk/debug/app-debug.apk teedet-pla.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: teedet-pla-apk
+          path: teedet-pla.apk
+          retention-days: 30
+
+      - name: Publish to release (only on manual run)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="apk-$(date +%Y%m%d-%H%M)"
+          gh release create "$TAG" teedet-pla.apk \
+            --title "ทีเด็ดปลาน้ำจืด (Android) $TAG" \
+            --notes "ไฟล์ติดตั้งสำหรับ Android ดาวน์โหลด teedet-pla.apk แล้วเปิดในเครื่อง (ต้องอนุญาตติดตั้งจากแหล่งที่ไม่รู้จัก)"

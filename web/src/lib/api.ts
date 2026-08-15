@@ -6,8 +6,12 @@ const QUEUE_KEY = 'teedet.queue'
 const CACHE_PREFIX = 'teedet.cache:'
 const API_KEY = 'teedet.api'
 
-/** true เมื่อเปิดจากที่เก็บไฟล์นิ่ง (GitHub Pages) ซึ่งไม่มีเซิร์ฟเวอร์ในตัว */
-export const IS_STATIC_HOST = /github\.io$|netlify\.app$|pages\.dev$/.test(location.hostname)
+/** true เมื่อรันเป็นแอปติดตั้ง (iOS/Android ผ่าน Capacitor) */
+export const IS_NATIVE_APP =
+  typeof (window as any).Capacitor !== 'undefined' || location.protocol === 'capacitor:' || location.protocol === 'file:'
+
+/** true เมื่อเปิดจากที่ที่ไม่มีเซิร์ฟเวอร์ในตัว (เว็บฟรี หรือแอปติดตั้ง) จึงต้องตั้งที่อยู่เซิร์ฟเวอร์เอง */
+export const IS_STATIC_HOST = IS_NATIVE_APP || /github\.io$|netlify\.app$|pages\.dev$/.test(location.hostname)
 
 function normalizeBase(v: string): string {
   let s = v.trim().replace(/\/+$/, '')

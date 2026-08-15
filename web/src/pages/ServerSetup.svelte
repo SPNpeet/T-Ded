@@ -1,6 +1,6 @@
 <script lang="ts">
   // ตั้งที่อยู่เซิร์ฟเวอร์ฟาร์ม สำหรับกรณีเปิดแอปจากหน้าเว็บฟรี (GitHub Pages) ที่ไม่มีเซิร์ฟเวอร์ในตัว
-  import { getApiBase, setApiBase, testApiBase, IS_STATIC_HOST } from '../lib/api'
+  import { getApiBase, setApiBase, testApiBase, IS_STATIC_HOST, IS_NATIVE_APP } from '../lib/api'
   import { toast, go, loadSession } from '../lib/ui.svelte'
   import TopBar from '../lib/TopBar.svelte'
   import Icon from '../lib/Icon.svelte'
@@ -38,7 +38,7 @@
   {#if IS_STATIC_HOST}
     <div class="alert info">
       <Icon name="info" />
-      <div>หน้านี้เปิดจากเว็บฟรี ({location.hostname}) ซึ่งเก็บได้แค่ไฟล์แอป <b>ไม่มีที่เก็บข้อมูล</b> เครื่องคำนวณและตารางอาหารใช้ได้เลย แต่ถ้าจะ <b>เข้าสู่ระบบและบันทึกข้อมูลบ่อ</b> ต้องใส่ที่อยู่เซิร์ฟเวอร์ของฟาร์มก่อน</div>
+      <div>{IS_NATIVE_APP ? "แอปนี้เก็บหน้าจอไว้ในเครื่องแล้ว" : `หน้านี้เปิดจากเว็บฟรี (${location.hostname}) ซึ่งเก็บได้แค่ไฟล์แอป`} <b>แต่ยังไม่มีที่เก็บข้อมูล</b> เครื่องคำนวณและตารางอาหารใช้ได้เลย แต่ถ้าจะ <b>เข้าสู่ระบบและบันทึกข้อมูลบ่อ</b> ต้องใส่ที่อยู่เซิร์ฟเวอร์ของฟาร์มก่อน</div>
     </div>
   {/if}
 
