@@ -1,7 +1,6 @@
 name: Deploy API (Fly.io)
 on:
-  push:
-    branches: [main]
+  # เปิดใช้อัตโนมัติเมื่อใส่ FLY_API_TOKEN ใน repo secrets แล้ว (ตอนนี้สั่งรันเองจากแท็บ Actions)
   workflow_dispatch:
 jobs:
   deploy:
