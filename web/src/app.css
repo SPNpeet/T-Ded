@@ -127,8 +127,8 @@ th { background: var(--paper); font-weight: 700; color: var(--navy); font-size: 
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .table-wrap { overflow-x: auto; }
 
-.tabs { display: flex; gap: 6px; background: #e9eef5; padding: 5px; border-radius: 14px; overflow-x: auto; }
-.tabs button { flex: 1; min-height: 46px; border: none; border-radius: 10px; background: transparent; font-weight: 700; color: var(--muted); cursor: pointer; white-space: nowrap; padding: 6px 12px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; background: #e9eef5; padding: 5px; border-radius: 14px; }
+.tabs button { flex: 1 1 30%; min-height: 48px; border: none; border-radius: 10px; background: transparent; font-weight: 700; color: var(--muted); cursor: pointer; white-space: nowrap; padding: 6px 12px; }
 .tabs button.active { background: #fff; color: var(--navy); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 
 .segment { display: flex; gap: 8px; }
