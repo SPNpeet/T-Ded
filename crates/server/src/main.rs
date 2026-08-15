@@ -6,6 +6,7 @@ mod db;
 mod error;
 mod line;
 mod products;
+mod security;
 mod settings;
 mod snapshot;
 mod weather;
@@ -31,6 +32,7 @@ pub struct AppState {
     pub db: db::Db,
     pub http: reqwest::Client,
     pub cfg: Arc<Config>,
+    pub login_guard: Arc<security::LoginGuard>,
 }
 
 #[tokio::main]
@@ -56,10 +58,25 @@ async fn main() {
         db,
         http: reqwest::Client::builder().user_agent("teedet-pla/0.1").timeout(std::time::Duration::from_secs(20)).build().expect("http client"),
         cfg: Arc::new(cfg),
+        login_guard: Arc::new(security::LoginGuard::new()),
     };
     auth::ensure_bootstrap_admin(&state).await.expect("bootstrap admin");
     products::seed_if_empty(&state).await.expect("seed feed products");
     line::spawn_scheduler(state.clone());
+    {
+        let st = state.clone();
+        tokio::spawn(async move {
+            loop {
+                tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
+                st.login_guard.sweep();
+                let _ = sqlx::query("DELETE FROM sessions WHERE last_seen_at < datetime('now', ?) OR created_at < datetime('now', ?)")
+                    .bind(format!("-{} days", security::SESSION_IDLE_DAYS))
+                    .bind(format!("-{} days", security::SESSION_MAX_DAYS))
+                    .execute(&st.db)
+                    .await;
+            }
+        });
+    }
 
     let api = Router::new()
         // สาธารณะ
@@ -143,6 +160,7 @@ async fn main() {
     let app = Router::new()
         .nest("/api", api)
         .fallback_service(spa)
+        .layer(axum::middleware::from_fn(security::security_headers))
         .layer(cors)
         .layer(CompressionLayer::new())
         .layer(TraceLayer::new_for_http());

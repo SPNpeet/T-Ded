@@ -33,9 +33,14 @@ impl FromRequestParts<AppState> for AuthUser {
             .ok_or(AppError::Unauthorized)?;
         let token = header.strip_prefix("Bearer ").ok_or(AppError::Unauthorized)?;
         let row = sqlx::query(
-            "SELECT u.id, u.org_id, u.role, u.name FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token = ?",
+            "SELECT u.id, u.org_id, u.role, u.name FROM sessions s JOIN users u ON u.id = s.user_id
+             WHERE s.token = ?
+               AND s.last_seen_at > datetime('now', ?)
+               AND s.created_at > datetime('now', ?)",
         )
         .bind(token)
+        .bind(format!("-{} days", crate::security::SESSION_IDLE_DAYS))
+        .bind(format!("-{} days", crate::security::SESSION_MAX_DAYS))
         .fetch_optional(&state.db)
         .await?
         .ok_or(AppError::Unauthorized)?;
@@ -80,6 +85,9 @@ fn normalize_phone(p: &str) -> String {
 fn validate_pin(pin: &str) -> ApiResult<()> {
     if pin.len() < 4 || pin.len() > 8 || !pin.chars().all(|c| c.is_ascii_digit()) {
         return Err(AppError::BadRequest("รหัส PIN ต้องเป็นตัวเลข 4-8 หลัก".into()));
+    }
+    if crate::security::is_weak_pin(pin) {
+        return Err(AppError::BadRequest("PIN นี้เดาง่ายเกินไป (เช่น 1234, 0000, เลขซ้ำ) กรุณาตั้งใหม่".into()));
     }
     Ok(())
 }
@@ -178,13 +186,28 @@ pub struct LoginReq {
 
 pub async fn login(State(st): State<AppState>, Json(req): Json<LoginReq>) -> ApiResult<Json<Value>> {
     let phone = normalize_phone(&req.phone);
+    // ล็อกชั่วคราวเมื่อกรอกผิดซ้ำ (ISO 27001 A.8.5)
+    if let Some(wait) = st.login_guard.locked_for(&phone) {
+        let mins = (wait / 60) + 1;
+        audit_auth(&st, None, "login_locked", &phone).await;
+        return Err(AppError::BadRequest(format!("กรอกผิดหลายครั้งเกินไป กรุณารออีก {mins} นาทีแล้วลองใหม่")));
+    }
     let row = sqlx::query("SELECT id, pin_hash FROM users WHERE phone = ?").bind(&phone).fetch_optional(&st.db).await?;
-    let Some(row) = row else { return Err(AppError::BadRequest("ไม่พบเบอร์นี้ หรือ PIN ไม่ถูกต้อง".into())) };
+    let Some(row) = row else {
+        st.login_guard.record_failure(&phone);
+        audit_auth(&st, None, "login_failed", &phone).await;
+        return Err(AppError::BadRequest("ไม่พบเบอร์นี้ หรือ PIN ไม่ถูกต้อง".into()));
+    };
     let hash: String = row.get("pin_hash");
     if !verify_pin(&req.pin, &hash) {
+        st.login_guard.record_failure(&phone);
+        let uid: String = row.get("id");
+        audit_auth(&st, Some(&uid), "login_failed", &phone).await;
         return Err(AppError::BadRequest("ไม่พบเบอร์นี้ หรือ PIN ไม่ถูกต้อง".into()));
     }
+    st.login_guard.record_success(&phone);
     let user_id: String = row.get("id");
+    audit_auth(&st, Some(&user_id), "login_ok", &phone).await;
     let token = issue_session(&st, &user_id, req.device.as_deref()).await?;
     Ok(Json(json!({ "token": token, "user": user_json(&st, &user_id).await? })))
 }
@@ -215,6 +238,18 @@ pub async fn change_pin(State(st): State<AppState>, user: AuthUser, Json(req): J
     }
     sqlx::query("UPDATE users SET pin_hash = ? WHERE id = ?").bind(hash_pin(&req.new_pin)?).bind(&user.id).execute(&st.db).await?;
     Ok(Json(json!({ "ok": true })))
+}
+
+async fn audit_auth(st: &AppState, user_id: Option<&str>, action: &str, phone: &str) {
+    // เก็บเฉพาะ 4 ตัวท้ายของเบอร์ ไม่เก็บเบอร์เต็มในล็อก (ลดข้อมูลส่วนบุคคล)
+    let masked = if phone.len() > 4 { format!("xxx{}", &phone[phone.len() - 4..]) } else { "xxx".into() };
+    let _ = sqlx::query("INSERT INTO audit_log (user_id, action, entity, entity_id, at) VALUES (?, ?, 'auth', ?, ?)")
+        .bind(user_id)
+        .bind(action)
+        .bind(masked)
+        .bind(now_iso())
+        .execute(&st.db)
+        .await;
 }
 
 async fn issue_session(st: &AppState, user_id: &str, device: Option<&str>) -> ApiResult<String> {

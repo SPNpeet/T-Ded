@@ -1,6 +1,6 @@
 <script lang="ts">
   const BASE = import.meta.env.BASE_URL
-  import { api, setToken } from '../lib/api'
+  import { api, setToken, needsApiSetup, getApiBase, IS_STATIC_HOST } from '../lib/api'
   import { loadSession, toast, go } from '../lib/ui.svelte'
   import { PROVINCES } from '../lib/format'
 
@@ -17,6 +17,7 @@
   let coords: { lat: number; lng: number } | null = $state(null)
 
   async function doLogin() {
+    if (needsApiSetup()) return go('/server')
     busy = true
     try {
       const r = await api.post('/auth/login', { phone, pin, device: navigator.userAgent.slice(0, 80) })
@@ -30,6 +31,7 @@
     }
   }
   async function doRegister() {
+    if (needsApiSetup()) return go('/server')
     busy = true
     try {
       const r = await api.post('/auth/register', { phone, pin, name, farm_name: farmName, province: province || null, org_code: orgCode || null, lat: coords?.lat ?? null, lng: coords?.lng ?? null })
@@ -102,6 +104,15 @@
       </form>
     {/if}
     <div class="divider"></div>
+    {#if IS_STATIC_HOST}
+      <div class="alert {getApiBase() ? 'good' : 'warn'} mt" style="font-size:0.92rem">
+        {#if getApiBase()}
+          เชื่อมกับเซิร์ฟเวอร์: {getApiBase().replace(/^https?:\/\//, '')} <a href="#/server">เปลี่ยน</a>
+        {:else}
+          หน้านี้เป็นเว็บฟรี ยังไม่ได้ต่อกับระบบบันทึกของฟาร์ม — <a href="#/server">ตั้งที่อยู่เซิร์ฟเวอร์ก่อน</a> ถึงจะเข้าสู่ระบบได้
+        {/if}
+      </div>
+    {/if}
     <p class="center small muted">ยังไม่พร้อมสมัคร? ลองเครื่องคำนวณก่อนได้</p>
     <div class="grid2 mt">
       <a class="btn ghost" href="#/calc">คำนวณอาหารปลา</a>

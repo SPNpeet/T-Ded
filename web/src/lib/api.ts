@@ -4,7 +4,47 @@ import { toast } from './ui.svelte'
 const TOKEN_KEY = 'teedet.token'
 const QUEUE_KEY = 'teedet.queue'
 const CACHE_PREFIX = 'teedet.cache:'
-export const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? ''
+const API_KEY = 'teedet.api'
+
+/** true เมื่อเปิดจากที่เก็บไฟล์นิ่ง (GitHub Pages) ซึ่งไม่มีเซิร์ฟเวอร์ในตัว */
+export const IS_STATIC_HOST = /github\.io$|netlify\.app$|pages\.dev$/.test(location.hostname)
+
+function normalizeBase(v: string): string {
+  let s = v.trim().replace(/\/+$/, '')
+  if (!s) return ''
+  if (!/^https?:\/\//i.test(s)) s = 'https://' + s
+  return s.replace(/\/api$/, '')
+}
+
+/** ที่อยู่เซิร์ฟเวอร์: ที่ผู้ใช้ตั้งเอง > ค่าตอน build > โดเมนเดียวกับหน้าเว็บ */
+export function getApiBase(): string {
+  const saved = localStorage.getItem(API_KEY)
+  if (saved) return saved
+  const built = (import.meta.env.VITE_API_BASE as string | undefined) ?? ''
+  return built ? normalizeBase(built) : ''
+}
+export function setApiBase(v: string | null) {
+  if (v) localStorage.setItem(API_KEY, normalizeBase(v))
+  else localStorage.removeItem(API_KEY)
+}
+/** ต้องให้ผู้ใช้ตั้งที่อยู่เซิร์ฟเวอร์ก่อนหรือยัง */
+export function needsApiSetup(): boolean {
+  return IS_STATIC_HOST && !getApiBase()
+}
+/** ทดสอบว่าที่อยู่นี้เป็นเซิร์ฟเวอร์ทีเด็ดปลาน้ำจืดจริง */
+export async function testApiBase(v: string): Promise<boolean> {
+  const base = normalizeBase(v)
+  if (!base) return false
+  try {
+    const ctl = new AbortController()
+    const timer = setTimeout(() => ctl.abort(), 8000)
+    const res = await fetch(base + '/api/health', { signal: ctl.signal })
+    clearTimeout(timer)
+    return res.ok && (await res.text()).trim() === 'ok'
+  } catch {
+    return false
+  }
+}
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY)
@@ -27,7 +67,10 @@ async function request<T = any>(method: string, path: string, body?: unknown, op
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   const t = getToken()
   if (t) headers['Authorization'] = `Bearer ${t}`
-  const res = await fetch(API_BASE + '/api' + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
+  if (needsApiSetup()) {
+    throw new ApiError(0, 'ยังไม่ได้ตั้งที่อยู่เซิร์ฟเวอร์ของฟาร์ม — ไปที่ "ตั้งค่าเซิร์ฟเวอร์" เพื่อใส่ที่อยู่ก่อน')
+  }
+  const res = await fetch(getApiBase() + '/api' + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
   if (opts.raw) return res as unknown as T
   const text = await res.text()
   let data: any = null
