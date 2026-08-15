@@ -1,0 +1,23 @@
+[package]
+name = "aqua-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Domain rules for freshwater fish farming: feeding, growth, environment adjustment, FCR, forecast, simulation, pond health"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+wasm = ["wasm-bindgen", "serde-wasm-bindgen", "console_error_panic_hook"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+wasm-bindgen = { version = "0.2", optional = true }
+serde-wasm-bindgen = { version = "0.6", optional = true }
+console_error_panic_hook = { version = "0.1", optional = true }
+
+[dev-dependencies]
+approx = "0.5"

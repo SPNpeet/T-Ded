@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "teedet-server",
+      "runtimeExecutable": "./target/release/teedet-server.exe",
+      "runtimeArgs": [],
+      "port": 8787
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1400" viewBox="0 0 1200 1400">
+    <rect width="1200" height="1400" fill="#FFFFFF"/>
+    <g transform="translate(306,84) scale(1.1484375)">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1B2440"/>
+      <stop offset="1" stop-color="#24406A"/>
+    </linearGradient>
+    <linearGradient id="fish" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#19B8D6"/>
+      <stop offset="1" stop-color="#5FE0F0"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#19B8D6" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#19B8D6" stop-opacity="0.35"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- ripples -->
+  <path d="M60 372c40 0 40-24 80-24s40 24 80 24 40-24 80-24 40 24 80 24 40-24 72-24" fill="none" stroke="url(#wave)" stroke-width="16" stroke-linecap="round"/>
+  <path d="M60 428c40 0 40-24 80-24s40 24 80 24 40-24 80-24 40 24 80 24 40-24 72-24" fill="none" stroke="#19B8D6" stroke-opacity="0.35" stroke-width="16" stroke-linecap="round"/>
+  <!-- fish body -->
+  <g transform="translate(0,-14)">
+    <path d="M110 232c44-72 112-112 200-112 58 0 104 34 132 112-28 78-74 112-132 112-88 0-156-40-200-112z" fill="url(#fish)"/>
+    <!-- tail -->
+    <path d="M118 232l-66-64c-8-8 4-20 14-14l96 44-96 52c-10 6-22-6-14-14z" fill="#19B8D6"/>
+    <path d="M118 232l-66-64c-8-8 4-20 14-14l96 44z" fill="#5FE0F0" opacity="0.7"/>
+    <!-- dorsal fin -->
+    <path d="M232 128c30-30 70-40 118-30-30 14-56 30-72 46z" fill="#0E8EA7"/>
+    <!-- belly highlight -->
+    <path d="M150 262c56 44 116 62 168 46-40 30-100 30-168-46z" fill="#ffffff" opacity="0.18"/>
+    <!-- gill -->
+    <path d="M330 176c26 18 40 40 40 56s-14 38-40 56" fill="none" stroke="#0E8EA7" stroke-width="10" stroke-linecap="round"/>
+    <!-- eye -->
+    <circle cx="378" cy="216" r="20" fill="#1B2440"/>
+    <circle cx="384" cy="210" r="7" fill="#ffffff"/>
+    <!-- pink accent: scale dots -->
+    <circle cx="240" cy="230" r="8" fill="#E23D8F"/>
+    <circle cx="272" cy="252" r="8" fill="#E23D8F" opacity="0.8"/>
+    <circle cx="208" cy="256" r="8" fill="#E23D8F" opacity="0.6"/>
+  </g>
+
+</g>
+    <text x="604.86" y="886.86" font-family="Prompt" font-weight="800" font-size="162" fill="#E23D8F" text-anchor="middle" opacity="0.9">ทีเด็ด</text>
+     <text x="595.14" y="877.14" font-family="Prompt" font-weight="800" font-size="162" fill="#19B8D6" text-anchor="middle" opacity="0.9">ทีเด็ด</text>
+     <text x="600" y="882" font-family="Prompt" font-weight="800" font-size="162" fill="#1B2440" text-anchor="middle">ทีเด็ด</text>
+    <text x="604.86" y="1110.86" font-family="Prompt" font-weight="800" font-size="162" fill="#E23D8F" text-anchor="middle" opacity="0.9">ปลาน้ำจืด</text>
+     <text x="595.14" y="1101.14" font-family="Prompt" font-weight="800" font-size="162" fill="#19B8D6" text-anchor="middle" opacity="0.9">ปลาน้ำจืด</text>
+     <text x="600" y="1106" font-family="Prompt" font-weight="800" font-size="162" fill="#1B2440" text-anchor="middle">ปลาน้ำจืด</text>
+    <text x="600" y="1260" font-family="Sarabun" font-weight="600" font-size="50.400000000000006" fill="#5B6878" text-anchor="middle">ด้วยอาหารคุณภาพ และคำปรึกษาจากมืออาชีพ</text>
+  </svg>
