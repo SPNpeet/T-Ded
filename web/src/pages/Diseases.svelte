@@ -26,6 +26,7 @@
     load()
   })
   async function save() {
+    if (!symptom) return toast('เลือกอาการที่พบก่อนครับ', 'error')
     busy = true
     try {
       await api.post('/disease-reports', { farm_id: currentFarm()?.id ?? null, province: currentFarm()?.province ?? province ?? null, symptom, severity, note: note || null, report_date: todayISO(), species_code: 'nile_tilapia' })
@@ -60,7 +61,7 @@
         <label>ความรุนแรง</label>
         <div class="segment"><button class:active={severity === 'low'} onclick={() => (severity = 'low')}>เล็กน้อย</button><button class:active={severity === 'medium'} class="warn" onclick={() => (severity = 'medium')}>ปานกลาง</button><button class:active={severity === 'high'} class="danger" onclick={() => (severity = 'high')}>รุนแรง</button></div>
         <label for="nt">รายละเอียด</label><input id="nt" bind:value={note} placeholder="เช่น ตายวันละ 20-30 ตัว 3 วันแล้ว" />
-        <button class="btn success mt" onclick={save} disabled={busy || !symptom}>ส่งรายงาน</button>
+        <button class="btn success mt" onclick={save} disabled={busy}>ส่งรายงาน</button>
         <p class="tiny muted mt">ระบบแสดงเฉพาะอำเภอ/จังหวัดและพิกัดหยาบ (ประมาณ 10 กม.) ไม่แสดงชื่อฟาร์ม</p>
       </div>
     {/if}

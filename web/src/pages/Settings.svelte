@@ -47,6 +47,7 @@
     loadSession()
   }
   async function changePin() {
+    if (!oldPin || !newPin) return toast('กรอก PIN เดิมและ PIN ใหม่ก่อน', 'error')
     try {
       await api.post('/auth/pin', { old_pin: oldPin, new_pin: newPin })
       toast('เปลี่ยน PIN แล้ว', 'success')
@@ -56,6 +57,7 @@
     }
   }
   async function addFarm() {
+    if (!newFarmName.trim()) return toast('ตั้งชื่อฟาร์มใหม่ก่อน', 'error')
     try {
       await api.post('/farms', { name: newFarmName })
       toast('เพิ่มฟาร์มแล้ว สลับฟาร์มได้ที่หน้าวันนี้', 'success')
@@ -66,6 +68,7 @@
     }
   }
   async function addWorker() {
+    if (!workerName || !workerPhone || !workerPin) return toast('กรอกชื่อ เบอร์โทร และ PIN ให้ครบ', 'error')
     try {
       await api.post('/users', { name: workerName, phone: workerPhone, pin: workerPin, role: 'worker', farm_id: farm.id })
       toast('เพิ่มคนงานแล้ว ให้เข้าสู่ระบบด้วยเบอร์และ PIN ที่ตั้ง', 'success')
@@ -118,18 +121,18 @@
   <div class="card mt">
     <h3>เปลี่ยนรหัส PIN</h3>
     <div class="grid2"><div><label for="op">PIN เดิม</label><input id="op" type="password" inputmode="numeric" bind:value={oldPin} /></div><div><label for="np">PIN ใหม่</label><input id="np" type="password" inputmode="numeric" bind:value={newPin} /></div></div>
-    <button class="btn ghost mt" onclick={changePin} disabled={!oldPin || !newPin}>เปลี่ยน PIN</button>
+    <button class="btn ghost mt" onclick={changePin} >เปลี่ยน PIN</button>
   </div>
 
   {#if farm && (session.user?.role === 'owner' || session.user?.role === 'admin' || session.user?.role === 'officer')}
     <div class="card mt">
       <h3>เพิ่มคนงาน/ผู้ช่วยให้เข้าบันทึกฟาร์มนี้</h3>
       <div class="grid3"><div><label for="wn">ชื่อ</label><input id="wn" bind:value={workerName} /></div><div><label for="wp">เบอร์โทร</label><input id="wp" type="tel" bind:value={workerPhone} /></div><div><label for="wpin">PIN</label><input id="wpin" inputmode="numeric" bind:value={workerPin} /></div></div>
-      <button class="btn ghost mt" onclick={addWorker} disabled={!workerName || !workerPhone || !workerPin}>เพิ่มคนงาน</button>
+      <button class="btn ghost mt" onclick={addWorker} >เพิ่มคนงาน</button>
     </div>
     <div class="card mt">
       <h3>เพิ่มฟาร์มอีกแห่ง</h3>
-      <div class="row"><input bind:value={newFarmName} placeholder="ชื่อฟาร์มใหม่" /><button class="btn ghost sm" onclick={addFarm} disabled={!newFarmName}>เพิ่ม</button></div>
+      <div class="row"><input bind:value={newFarmName} placeholder="ชื่อฟาร์มใหม่" /><button class="btn ghost sm" onclick={addFarm} >เพิ่ม</button></div>
     </div>
   {/if}
 

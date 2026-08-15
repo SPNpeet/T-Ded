@@ -2,7 +2,7 @@
   import { onMount } from 'svelte'
   import { api, cachedGet } from '../lib/api'
   import { go, toast } from '../lib/ui.svelte'
-  import { thDate, thDateShort, thDateTime, n, n1, n2, baht, bahtShort, pct, bandPill, expenseLabel, addDays, healthColor } from '../lib/format'
+  import { thDate, thDateShort, thDateTime, n, n1, n2, baht, bahtShort, pct, bandPill, expenseLabel, addDays, healthColor, portionText, bagLastsDays } from '../lib/format'
   import TopBar from '../lib/TopBar.svelte'
   import ScoreRing from '../lib/ScoreRing.svelte'
   import LineChart from '../lib/LineChart.svelte'
@@ -150,7 +150,8 @@
       <section class="hero mt">
         <div class="muted small">อาหารที่แนะนำวันนี้ {thDate(s.date)}</div>
         <div class="big-number">{n2(rec.final_kg)}<small>กก./วัน</small></div>
-        <div class="mt small">แบ่ง {rec.meals_per_day} มื้อ มื้อละ <b>{n2(rec.per_meal_kg)} กก.</b> · เม็ด {rec.pellet_mm} มม. · {rec.pct}% ของน้ำหนักตัว</div>
+        <div class="mt small">แบ่ง {rec.meals_per_day} มื้อ มื้อละ <b>{n2(rec.per_meal_kg)} กก.</b> ({portionText(rec.per_meal_kg)}) · เม็ด {rec.pellet_mm} มม. · {rec.pct}% ของน้ำหนักตัว</div>
+        <div class="small" style="margin-top:6px">อาหาร 1 กระสอบ ({s.crop.bag_kg ?? 20} กก.) ใช้ได้ประมาณ <b>{n1(bagLastsDays(rec.final_kg, s.crop.bag_kg ?? 20) ?? 0)} วัน</b> ที่อัตรานี้{s.stock?.balance_kg ? ` · ในสต๊อกเหลือ ${n1(s.stock.balance_kg)} กก. พอถึงอีก ${n(Math.floor(s.stock.balance_kg / Math.max(0.01, rec.final_kg)))} วัน` : ''}</div>
         <div class="row wrap mt small" style="gap:8px">
           <span class="pill {bp.cls}">{rec.headline_th}</span>
           {#if rec.factor !== 1}<span class="pill neutral">ฐาน {n2(rec.base_kg)} กก. × {rec.factor}</span>{/if}

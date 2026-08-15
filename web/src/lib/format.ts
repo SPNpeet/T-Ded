@@ -10,6 +10,28 @@ export function nowISO(): string {
   return new Date().toISOString()
 }
 
+/** อาหารเม็ดลอยประมาณ 0.55 กก. ต่อ 1 ลิตร ใช้แปลงน้ำหนักเป็นภาชนะที่หน้าบ่อใช้จริง */
+export const FEED_KG_PER_LITER = 0.55
+
+export function feedPortions(kg: number, bagKg = 20) {
+  const liters = kg / FEED_KG_PER_LITER
+  return { kg, bags: kg / bagKg, cans: liters / 0.4, buckets: liters / 20, liters }
+}
+
+/** ข้อความภาชนะแบบชาวบ้าน เช่น "ประมาณ 1.2 ถัง" หรือ "ประมาณ 8 กระป๋องนม" */
+export function portionText(kg: number): string {
+  if (!(kg > 0)) return ''
+  const p = feedPortions(kg)
+  if (p.buckets >= 1) return 'ประมาณ ' + n(p.buckets, 1) + ' ถัง (ถังสี 20 ลิตร)'
+  return 'ประมาณ ' + n(p.cans, 0) + ' กระป๋องนม (กระป๋อง 400 ก.)'
+}
+
+/** อาหาร 1 กระสอบใช้ได้กี่วันที่อัตราให้ปัจจุบัน */
+export function bagLastsDays(kgPerDay: number, bagKg = 20): number | null {
+  if (!(kgPerDay > 0)) return null
+  return bagKg / kgPerDay
+}
+
 export function thDate(iso?: string | null, withYear = true): string {
   if (!iso) return '-'
   const [y, m, d] = iso.slice(0, 10).split('-').map(Number)

@@ -2,7 +2,7 @@
   import { onMount } from 'svelte'
   import { cachedGet, submit } from '../lib/api'
   import { go, toast, ui } from '../lib/ui.svelte'
-  import { todayISO, thDate, n2, FEEDING_RESPONSE } from '../lib/format'
+  import { todayISO, thDate, n2, FEEDING_RESPONSE, portionText } from '../lib/format'
   import TopBar from '../lib/TopBar.svelte'
   import { recommendLocal, speciesByCode } from '../lib/engine'
 
@@ -86,6 +86,7 @@
     <div class="card tint-cyan">
       <div class="small muted">แนะนำวันนี้</div>
       <div class="big-number">{n2(rec.final_kg)}<small>กก. · มื้อละ {n2(rec.per_meal_kg)}</small></div>
+      <div class="small">มื้อละ{portionText(rec.per_meal_kg).replace('ประมาณ', ' ประมาณ')}</div>
       <div class="small">{rec.headline_th}</div>
       {#if rec.reasons?.length}<details class="mt"><summary>ดูเหตุผล</summary>{#each rec.reasons as r}<div class="reason"><b>× {r.factor.toFixed(2)}</b><span>{r.text_th}</span></div>{/each}</details>{/if}
     </div>

@@ -32,6 +32,7 @@
     load()
   })
   async function save() {
+    if (!price || !(parseFloat(price) > 0)) return toast('กรอกราคาบาท/กก. ก่อนครับ', 'error')
     busy = true
     try {
       await api.post('/prices', { species_code: code, province: province || null, price_per_kg: parseFloat(price), size_note: size || null, price_date: todayISO() })
@@ -72,7 +73,7 @@
         <div class="card mt">
           <label for="pr">ราคา (บาท/กก.)</label><input id="pr" type="number" inputmode="decimal" bind:value={price} />
           <label for="sz">ขนาด/หมายเหตุ</label><input id="sz" bind:value={size} placeholder="เช่น ไซส์ 3-4 ตัว/กก. หน้าฟาร์ม" />
-          <button class="btn success mt" onclick={save} disabled={busy || !price}>ส่งราคา</button>
+          <button class="btn success mt" onclick={save} disabled={busy}>ส่งราคา</button>
         </div>
       {/if}
     {/if}

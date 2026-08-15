@@ -139,6 +139,7 @@
     load()
   }
   async function sendAnn() {
+    if (!ann.title.trim()) return toast('ใส่หัวข้อประกาศก่อน', 'error')
     busy = true
     try {
       await api.post('/announcements', ann)
@@ -151,6 +152,11 @@
     }
   }
   async function createUser() {
+    const miss: string[] = []
+    if (!newUser.name) miss.push('ชื่อ')
+    if (!newUser.phone) miss.push('เบอร์โทร')
+    if (!newUser.pin) miss.push('PIN')
+    if (miss.length) return toast('กรอก' + miss.join(', ') + 'ก่อน', 'error')
     busy = true
     try {
       await api.post('/users', newUser)
@@ -347,7 +353,7 @@
           <div><label>PIN</label><input inputmode="numeric" bind:value={newUser.pin} /></div>
           <div><label>บทบาท</label><select bind:value={newUser.role}><option value="officer">เจ้าหน้าที่ส่งเสริม</option><option value="owner">เจ้าของฟาร์ม (ยังไม่ผูกฟาร์ม)</option>{#if session.user?.role === 'admin'}<option value="admin">ผู้ดูแลระบบ</option>{/if}</select></div>
         </div>
-        <button class="btn primary mt" onclick={createUser} disabled={busy || !newUser.name || !newUser.phone || !newUser.pin}>สร้างผู้ใช้</button>
+        <button class="btn primary mt" onclick={createUser} disabled={busy}>สร้างผู้ใช้</button>
         <p class="tiny muted mt">รหัสหน่วยงานสำหรับให้เกษตรกรกรอกตอนสมัคร: <b>{session.user?.org_id}</b></p>
       </div>
       <div class="card mt"><div class="table-wrap"><table><thead><tr><th>ชื่อ</th><th>เบอร์</th><th>บทบาท</th><th>ฟาร์ม</th><th>LINE</th></tr></thead><tbody>
@@ -360,7 +366,7 @@
         <h3>ส่งประกาศถึงทุกฟาร์ม</h3>
         <label>หัวข้อ</label><input bind:value={ann.title} placeholder="เช่น เตือนอากาศหนาวสัปดาห์หน้า" />
         <label>ข้อความ</label><textarea bind:value={ann.body} placeholder="ลดอาหารช่วงเช้า เปิดตีน้ำ..."></textarea>
-        <button class="btn primary mt" onclick={sendAnn} disabled={busy || !ann.title}>ส่งประกาศ</button>
+        <button class="btn primary mt" onclick={sendAnn} disabled={busy}>ส่งประกาศ</button>
       </div>
     {/if}
 

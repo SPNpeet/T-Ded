@@ -21,6 +21,10 @@
   })
   const sp = $derived(species.find((s) => s.code === code))
   async function save() {
+    const miss: string[] = []
+    if (!count || !(parseInt(count) > 0)) miss.push('จำนวนที่ปล่อย')
+    if (!weight || !(parseFloat(weight) > 0)) miss.push('น้ำหนักเฉลี่ยตอนปล่อย')
+    if (miss.length) return toast('กรอก' + miss.join(' และ ') + 'ก่อนครับ', 'error', 3500)
     busy = true
     try {
       const r = await api.post(`/ponds/${pondId}/crops`, { species_code: code, stocked_at: stockedAt, stocked_count: parseInt(count), stock_weight_g: parseFloat(weight), fry_price_each: fryPrice ? parseFloat(fryPrice) : 0, target_weight_g: target ? parseFloat(target) : null, note: note || null })
@@ -47,6 +51,6 @@
   </div>
   <label for="nt">หมายเหตุ</label><input id="nt" bind:value={note} placeholder="เช่น ลูกปลาจากฟาร์ม..." />
   {#if count && fryPrice}<div class="card tint-cyan mt small">ค่าลูกปลา {(parseInt(count) * parseFloat(fryPrice)).toLocaleString('th-TH')} บาท จะถูกบันทึกเป็นต้นทุนแรกของรุ่นอัตโนมัติ</div>{/if}
-  <button class="btn success mt2" onclick={save} disabled={busy || !count || !weight}>เริ่มรุ่นการเลี้ยง</button>
+  <button class="btn success mt2" onclick={save} disabled={busy}>เริ่มรุ่นการเลี้ยง</button>
   <a class="btn link mt" href="#/simulate">อยากจำลองก่อนตัดสินใจ? เปิดตัวจำลองรุ่น</a>
 </main>

@@ -34,7 +34,19 @@
   const path = (pts: { x: number; y: number }[]) => pts.map((p, i) => `${i ? 'L' : 'M'}${sx(p.x).toFixed(1)},${sy(p.y).toFixed(1)}`).join(' ')
   const nice = (v: number) => { if (v === 0) return 0; const p = Math.pow(10, Math.floor(Math.log10(Math.abs(v)))); const m = v / p; const r = m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10; return r * p }
   const yTicks = $derived.by(() => { const step = nice((y1 - y0) / 4); const out: number[] = []; for (let t = Math.ceil(y0 / step) * step; t <= y1 + 1e-9; t += step) out.push(t); return out })
-  const xTicks = $derived.by(() => { const span = x1 - x0; if (span <= 0) return [x0]; const step = span <= 14 ? 2 : span <= 60 ? 7 : span <= 200 ? 14 : 30; const out: number[] = []; for (let t = Math.ceil(x0 / step) * step; t <= x1; t += step) out.push(t); if (!out.length || out[out.length - 1] < x1 - step / 2) out.push(x1); return out })
+  // จำนวนป้ายแกนนอนคิดจากความกว้างจริง เพื่อไม่ให้ตัวหนังสือทับกัน
+  const xTicks = $derived.by(() => {
+    const span = x1 - x0
+    if (span <= 0) return [x0]
+    const maxLabels = Math.max(2, Math.floor((W - P.l - P.r) / 74))
+    const raw = span / maxLabels
+    const steps = [1, 2, 5, 7, 10, 14, 20, 30, 60, 90, 120, 180, 365]
+    const step = steps.find((s) => s >= raw) ?? Math.ceil(raw / 30) * 30
+    const out: number[] = []
+    for (let t = Math.ceil(x0 / step) * step; t <= x1 - step * 0.45; t += step) out.push(t)
+    out.push(x1)
+    return out
+  })
 </script>
 
 <div bind:clientWidth={boxW} style="width:100%">

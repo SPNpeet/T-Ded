@@ -36,6 +36,7 @@
   })
   const activeCrop = (pondId: string) => crops.find((c) => c.pond_id === pondId)
   async function addPond() {
+    if (!name.trim()) return toast('ตั้งชื่อบ่อก่อนครับ เช่น บ่อ 1', 'error')
     busy = true
     try {
       if (editing) {
@@ -84,7 +85,7 @@
           <div><label for="dp">ความลึกน้ำ (ม.)</label><input id="dp" type="number" inputmode="decimal" step="0.1" bind:value={depth} /></div>
           <div><label for="pt">ชนิดบ่อ</label><select id="pt" bind:value={ptype}><option value="earthen">บ่อดิน</option><option value="concrete">บ่อปูน</option><option value="cage">กระชัง</option><option value="liner">บ่อผ้าใบ/พลาสติก</option></select></div>
         </div>
-        <button class="btn success mt" onclick={addPond} disabled={busy || !name}>{editing ? 'บันทึกการแก้ไข' : 'เพิ่มบ่อ'}</button>
+        <button class="btn success mt" onclick={addPond} disabled={busy}>{editing ? 'บันทึกการแก้ไข' : 'เพิ่มบ่อ'}</button>
       </div>
     {/if}
     {#each farm.ponds as p}
