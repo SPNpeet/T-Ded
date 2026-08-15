@@ -1,5 +1,6 @@
 mod admin;
 mod api;
+mod billing;
 mod auth;
 mod calc;
 mod db;
@@ -129,6 +130,11 @@ async fn main() {
         .route("/line/unlink", post(line::unlink))
         .route("/announcements", get(admin::list_announcements).post(admin::create_announcement))
         .route("/benchmark", get(admin::benchmark))
+        .route("/subscription", get(billing::my_subscription))
+        .route("/admin/subscriptions", get(billing::list_subscriptions))
+        .route("/admin/subscriptions/{org_id}", axum::routing::put(billing::set_subscription))
+        .route("/admin/subscriptions/{org_id}/payments", post(billing::record_payment))
+        .route("/admin/revenue", get(billing::revenue_summary))
         // หลังบ้าน
         .route("/admin/farms", get(admin::farms_overview))
         .route("/admin/farms/{id}", get(admin::farm_detail))

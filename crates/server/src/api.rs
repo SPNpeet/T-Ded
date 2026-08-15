@@ -82,6 +82,7 @@ pub async fn list_farms(State(st): State<AppState>, user: AuthUser) -> ApiResult
 
 pub async fn create_farm(State(st): State<AppState>, user: AuthUser, Json(b): Json<Value>) -> ApiResult<Json<Value>> {
     let name = s(&b, "name").ok_or_else(|| AppError::BadRequest("กรอกชื่อฟาร์ม".into()))?;
+    crate::billing::check_can_add(&st, &user.org_id, "ฟาร์ม").await?;
     let id = new_id();
     let now = now_iso();
     sqlx::query("INSERT INTO farms (id, org_id, name, province, district, lat, lng, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
@@ -140,6 +141,7 @@ pub async fn update_farm(State(st): State<AppState>, user: AuthUser, Path(id): P
 
 pub async fn create_pond(State(st): State<AppState>, user: AuthUser, Path(farm_id): Path<String>, Json(b): Json<Value>) -> ApiResult<Json<Value>> {
     assert_farm_access(&st, &user, &farm_id).await?;
+    crate::billing::check_can_add(&st, &user.org_id, "บ่อ").await?;
     let name = s(&b, "name").ok_or_else(|| AppError::BadRequest("กรอกชื่อบ่อ".into()))?;
     let id = new_id();
     let area_rai = f(&b, "area_rai");

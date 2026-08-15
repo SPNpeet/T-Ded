@@ -173,6 +173,7 @@ pub async fn register(State(st): State<AppState>, Json(req): Json<RegisterReq>) 
         .execute(&st.db)
         .await?;
 
+    crate::billing::start_trial(&st, &org_id).await?;
     let token = issue_session(&st, &user_id, None).await?;
     Ok(Json(json!({ "token": token, "user": user_json(&st, &user_id).await?, "farm_id": farm_id })))
 }
@@ -348,6 +349,7 @@ pub async fn create_user(State(st): State<AppState>, user: AuthUser, Json(req): 
     }
     let phone = normalize_phone(&req.phone);
     validate_pin(&req.pin)?;
+    crate::billing::check_can_add(&st, &user.org_id, "สมาชิก").await?;
     if sqlx::query("SELECT id FROM users WHERE phone = ?").bind(&phone).fetch_optional(&st.db).await?.is_some() {
         return Err(AppError::BadRequest("เบอร์นี้มีผู้ใช้แล้ว".into()));
     }

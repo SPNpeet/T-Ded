@@ -23,6 +23,8 @@
   import Menu from './pages/Menu.svelte'
   import FeedMix from './pages/FeedMix.svelte'
   import ServerSetup from './pages/ServerSetup.svelte'
+  import Plan from './pages/Plan.svelte'
+  import Legal from './pages/Legal.svelte'
 
   onMount(() => {
     loadSession()
@@ -30,7 +32,7 @@
 
   const parts = $derived(ui.route.split('?')[0].split('/').filter(Boolean))
   const seg = (i: number) => parts[i] ?? ''
-  const isPublic = $derived(['calc', 'simulate', 'login', 'register', 'feed', 'server'].includes(seg(0)))
+  const isPublic = $derived(['calc', 'simulate', 'login', 'register', 'feed', 'server', 'privacy', 'terms'].includes(seg(0)))
   const showNav = $derived(!!session.user && !['login', 'register'].includes(seg(0)))
   const navActive = (k: string) => (k === '/' ? parts.length === 0 || seg(0) === 'pond' : seg(0) === k.slice(1))
 </script>
@@ -80,6 +82,12 @@
   <Admin sub={seg(1) || 'farms'} id={seg(2)} />
 {:else if seg(0) === 'report'}
   <Report cropId={seg(1)} />
+{:else if seg(0) === 'privacy'}
+  <Legal kind="privacy" />
+{:else if seg(0) === 'terms'}
+  <Legal kind="terms" />
+{:else if seg(0) === 'plan'}
+  <Plan />
 {:else if seg(0) === 'server'}
   <ServerSetup />
 {:else if seg(0) === 'feed'}
