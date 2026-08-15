@@ -11,6 +11,7 @@ use crate::{
     perf::{performance, PerfInput},
     species::SpeciesProfile,
     water::{assess_water, WaterSample},
+    nutrition::{self, FeedOnHand, Ingredient},
 };
 
 fn to_js<T: serde::Serialize>(v: &T) -> Result<JsValue, JsValue> {
@@ -94,4 +95,37 @@ pub fn pond_health(input: JsValue, species: JsValue) -> Result<JsValue, JsValue>
     let i: HealthInput = from_js(input)?;
     let sp: SpeciesProfile = from_js(species)?;
     to_js(&health_score(&i, &sp.water))
+}
+
+#[wasm_bindgen]
+pub fn nutrition_stages(species_code: &str) -> Result<JsValue, JsValue> {
+    to_js(&nutrition::stages_for(species_code))
+}
+
+#[wasm_bindgen]
+pub fn nutrition_advise(species_code: &str, weight_g: f64, feed_kg_day: f64, on_hand: JsValue) -> Result<JsValue, JsValue> {
+    let oh: FeedOnHand = from_js(on_hand)?;
+    to_js(&nutrition::advise(species_code, weight_g, feed_kg_day, &oh))
+}
+
+#[wasm_bindgen]
+pub fn nutrition_ingredients() -> Result<JsValue, JsValue> {
+    to_js(&nutrition::default_ingredients())
+}
+
+#[wasm_bindgen]
+pub fn nutrition_mix(ingredients: JsValue, batch_kg: Option<f64>) -> Result<JsValue, JsValue> {
+    let list: Vec<Ingredient> = from_js(ingredients)?;
+    to_js(&nutrition::mix(&list, batch_kg))
+}
+
+#[wasm_bindgen]
+pub fn nutrition_pearson(protein_a: f64, protein_b: f64, target: f64) -> Result<JsValue, JsValue> {
+    to_js(&nutrition::pearson_square(protein_a, protein_b, target))
+}
+
+#[wasm_bindgen]
+pub fn nutrition_tips() -> Result<JsValue, JsValue> {
+    let tips: Vec<(String, String)> = nutrition::feed_tips().into_iter().map(|(a, b)| (a.to_string(), b.to_string())).collect();
+    to_js(&tips)
 }

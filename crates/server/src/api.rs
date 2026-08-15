@@ -462,7 +462,7 @@ pub async fn insert_stock_move(st: &AppState, farm_id: &str, b: &Value) -> ApiRe
     let bags = f(b, "bags");
     let kg = f(b, "kg").or(bags.map(|x| x * f(b, "bag_kg").unwrap_or(bag_kg))).ok_or_else(|| AppError::BadRequest("กรอกจำนวน กก. หรือกระสอบ".into()))?;
     let id = new_id();
-    sqlx::query("INSERT INTO feed_stock_moves (id, client_id, farm_id, move_date, kind, brand, pellet_mm, bags, kg, price_total, crop_id, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    sqlx::query("INSERT INTO feed_stock_moves (id, client_id, farm_id, move_date, kind, brand, pellet_mm, bags, kg, price_total, crop_id, note, created_at, protein_pct, form, product_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(&id)
         .bind(s(b, "client_id"))
         .bind(farm_id)
@@ -476,6 +476,9 @@ pub async fn insert_stock_move(st: &AppState, farm_id: &str, b: &Value) -> ApiRe
         .bind(s(b, "crop_id"))
         .bind(s(b, "note"))
         .bind(now_iso())
+        .bind(f(b, "protein_pct"))
+        .bind(s(b, "form"))
+        .bind(s(b, "product_id"))
         .execute(&st.db)
         .await?;
     Ok(id)
@@ -512,6 +515,8 @@ pub async fn stock_summary_json(st: &AppState, farm_id: &str) -> ApiResult<Value
     let days_left = if per_day > 0.0 { Some((balance / per_day).floor()) } else { None };
     let bag_kg: f64 = sqlx::query("SELECT bag_kg FROM farms WHERE id = ?").bind(farm_id).fetch_one(&st.db).await?.get("bag_kg");
     let recent = sqlx::query("SELECT * FROM feed_stock_moves WHERE farm_id = ? ORDER BY move_date DESC, created_at DESC LIMIT 30").bind(farm_id).fetch_all(&st.db).await?;
+    let last_in = sqlx::query("SELECT brand, protein_pct, pellet_mm, form, price_total, kg FROM feed_stock_moves WHERE farm_id = ? AND kind = 'in' ORDER BY move_date DESC, created_at DESC LIMIT 1").bind(farm_id).fetch_optional(&st.db).await?;
+    let current_feed = last_in.map(|r| { let v = row_to_json(&r); let kg = v["kg"].as_f64().unwrap_or(0.0); let price = v["price_total"].as_f64(); json!({ "brand": v["brand"], "protein_pct": v["protein_pct"], "pellet_mm": v["pellet_mm"], "form": v["form"], "price_per_kg": price.filter(|_| kg > 0.0).map(|p| (p / kg * 100.0).round() / 100.0) }) });
     Ok(json!({
         "balance_kg": (balance * 10.0).round() / 10.0,
         "balance_bags": (balance / bag_kg * 10.0).round() / 10.0,
@@ -521,6 +526,7 @@ pub async fn stock_summary_json(st: &AppState, farm_id: &str) -> ApiResult<Value
         "days_left": days_left,
         "low": days_left.map(|d| d <= 5.0).unwrap_or(false),
         "moves": rows_to_json(&recent),
+        "current_feed": current_feed,
     }))
 }
 

@@ -6,6 +6,7 @@
   import LineChart from '../lib/LineChart.svelte'
   import MoneyBars from '../lib/MoneyBars.svelte'
   import Timeline from '../lib/Timeline.svelte'
+  import Collapse from '../lib/Collapse.svelte'
   import { simulateLocal, speciesList } from '../lib/engine'
 
   let species: any[] = $state([])
@@ -92,12 +93,12 @@
       <div class="small muted">อาหารต่อวันตอนต้น {n1(out.curve[1]?.feed_kg_day ?? 0)} กก. ตอนปลาย {n1(out.curve[out.curve.length - 1]?.feed_kg_day ?? 0)} กก. · อัตรารอดที่ใช้คิด {out.survival_pct}% · FCR คาด {out.projected_fcr ?? '-'}</div>
     </div>
     {#if !out.reached_target && mode === 'weight'}<div class="alert warn mt">ภายใน 400 วันยังไม่ถึงน้ำหนักเป้าหมาย ลองลดเป้าหมาย</div>{/if}
-    <details class="card mt"><summary>ดูกราฟ (สำหรับผู้ที่ต้องการรายละเอียด)</summary>
+    <div class="mt"><Collapse title="ดูกราฟ (สำหรับผู้ที่ต้องการรายละเอียด)">
       <h3 class="mt">น้ำหนักเฉลี่ยตามเวลา</h3>
       <LineChart series={[{ name: 'น้ำหนัก (ก.)', color: '#0e8ea7', points: out.curve.map((c: any) => ({ x: c.day, y: c.avg_weight_g })) }]} height={180} xLabel={(x) => `วัน ${Math.round(x)}`} />
       <h3 class="mt">อาหารต่อวัน</h3>
       <LineChart series={[{ name: 'อาหาร กก./วัน', color: '#1f9d5a', points: out.curve.slice(1).map((c: any) => ({ x: c.day, y: c.feed_kg_day })) }]} height={160} xLabel={(x) => `วัน ${Math.round(x)}`} />
-    </details>
+    </Collapse></div>
     <p class="small muted mt">การจำลองใช้ตารางการโตและอัตราให้อาหารมาตรฐาน อากาศจริง คุณภาพน้ำ และการจัดการมีผลต่อผลลัพธ์จริง ใช้เพื่อวางแผนเบื้องต้น</p>
   {/if}
 </main>

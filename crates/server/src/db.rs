@@ -18,6 +18,8 @@ pub async fn connect(url: &str) -> anyhow_lite::Result<Db> {
 /// migration แบบเรียงลำดับ เก็บเวอร์ชันในตาราง schema_version — เพิ่มไฟล์ใหม่ต่อท้ายเสมอ ห้ามแก้ของเก่า
 const MIGRATIONS: &[(&str, &str)] = &[
     ("0001_init", include_str!("../migrations/0001_init.sql")),
+    ("0002_feed_nutrition", include_str!("../migrations/0002_feed_nutrition.sql")),
+    ("0003_feed_products", include_str!("../migrations/0003_feed_products.sql")),
 ];
 
 async fn migrate(pool: &Db) -> anyhow_lite::Result<()> {

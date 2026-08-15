@@ -19,6 +19,27 @@
   let editSpecies: any = $state(null)
   let editRules: any[] = $state([])
   let filter = $state('')
+  let products: any[] = $state([])
+  let editProd: any = $state(null)
+  async function saveProd() {
+    busy = true
+    try {
+      if (editProd.id) await api.patch(`/feed-products/${editProd.id}`, editProd)
+      else await api.post('/feed-products', editProd)
+      toast('บันทึกสินค้าแล้ว', 'success')
+      editProd = null
+      load()
+    } catch (e: any) {
+      toast(e.message, 'error')
+    } finally {
+      busy = false
+    }
+  }
+  async function delProd(id: string) {
+    if (!confirm('ซ่อนสินค้านี้จากรายการ?')) return
+    await api.del(`/feed-products/${id}`)
+    load()
+  }
 
   async function load() {
     try {
@@ -31,6 +52,7 @@
       if (sub === 'species') species = await api.get('/admin/species')
       if (sub === 'users') users = await api.get('/admin/users')
       if (sub === 'audit') audit = await api.get('/admin/audit?limit=200')
+      if (sub === 'products') products = await api.get('/feed-products')
     } catch (e: any) {
       toast(e.message, 'error')
     }
@@ -45,6 +67,7 @@
     ['farms', 'ฟาร์ม'],
     ['rules', 'กติกาปรับ'],
     ['species', 'ตารางปลา'],
+    ['products', 'ยี่ห้ออาหาร'],
     ['users', 'ผู้ใช้'],
     ['announce', 'ประกาศ'],
     ['audit', 'ประวัติแก้ไข'],
@@ -204,6 +227,39 @@
           {/if}
         </div>
       {/each}
+    {/if}
+
+    {#if sub === 'products'}
+      <button class="btn primary mt" onclick={() => (editProd = { brand: '', product_code: '', name_th: '', target: 'tilapia', stage_th: '', weight_from_g: 0, weight_to_g: 100000, protein_pct: 30, fat_pct: 4, pellet_mm: 3, form: 'floating', bag_kg: 20, price_ref: null, source_url: '', verified: 1, note: '' })}>เพิ่มสินค้าใหม่</button>
+      {#if editProd}
+        <div class="card mt">
+          <h3>{editProd.id ? 'แก้ไขสินค้า' : 'สินค้าใหม่'}</h3>
+          <div class="grid2">
+            <div><label>ยี่ห้อ</label><input bind:value={editProd.brand} /></div>
+            <div><label>เบอร์/รหัส</label><input bind:value={editProd.product_code} /></div>
+          </div>
+          <label>ชื่อที่แสดง</label><input bind:value={editProd.name_th} />
+          <div class="grid3">
+            <div><label>กลุ่มปลา</label><select bind:value={editProd.target}><option value="tilapia">ปลานิล/ทับทิม</option><option value="catfish">ปลาดุก</option><option value="herbivore">ปลากินพืช</option><option value="carnivore">ปลากินเนื้อ</option><option value="all">ทุกชนิด</option></select></div>
+            <div><label>ช่วง (ข้อความ)</label><input bind:value={editProd.stage_th} /></div>
+            <div><label>ชนิดเม็ด</label><select bind:value={editProd.form}><option value="floating">ลอยน้ำ</option><option value="sinking">จมน้ำ</option><option value="crumble">เม็ดเล็ก</option><option value="powder">ผง</option></select></div>
+            <div><label>ปลาหนักจาก (ก.)</label><input type="number" bind:value={editProd.weight_from_g} /></div>
+            <div><label>ถึง (ก.)</label><input type="number" bind:value={editProd.weight_to_g} /></div>
+            <div><label>โปรตีน %</label><input type="number" step="0.5" bind:value={editProd.protein_pct} /></div>
+            <div><label>ไขมัน %</label><input type="number" step="0.5" bind:value={editProd.fat_pct} /></div>
+            <div><label>เม็ด (มม.)</label><input type="number" step="0.1" bind:value={editProd.pellet_mm} /></div>
+            <div><label>ถุง (กก.)</label><input type="number" bind:value={editProd.bag_kg} /></div>
+            <div><label>ราคาอ้างอิง/ถุง</label><input type="number" bind:value={editProd.price_ref} /></div>
+            <div><label>ยืนยันจากฉลากแล้ว</label><select bind:value={editProd.verified}><option value={1}>ใช่</option><option value={0}>ยัง (ค่าประมาณ)</option></select></div>
+          </div>
+          <label>ที่มา (URL)</label><input bind:value={editProd.source_url} />
+          <label>หมายเหตุ</label><input bind:value={editProd.note} />
+          <div class="grid2 mt"><button class="btn primary" onclick={saveProd} disabled={busy}>บันทึก</button><button class="btn ghost" onclick={() => (editProd = null)}>ยกเลิก</button></div>
+        </div>
+      {/if}
+      <div class="card mt"><div class="table-wrap"><table><thead><tr><th>ยี่ห้อ / สินค้า</th><th>กลุ่ม</th><th class="num">โปรตีน</th><th class="num">เม็ด</th><th class="num">ถุง</th><th class="num">ราคา</th><th>สถานะ</th><th></th></tr></thead><tbody>
+        {#each products as p}<tr><td><b>{p.name_th}</b><div class="small muted">{p.brand}</div></td><td>{p.target}</td><td class="num">{p.protein_pct ?? '-'}%</td><td class="num">{p.pellet_mm ?? '-'}</td><td class="num">{p.bag_kg ?? '-'}</td><td class="num">{p.price_ref ?? '-'}</td><td>{p.verified ? 'ยืนยัน' : 'ประมาณ'}</td><td style="white-space:nowrap"><button class="btn link" onclick={() => (editProd = { ...p })}>แก้</button><button class="btn link" style="color:var(--red)" onclick={() => delProd(p.id)}>ซ่อน</button></td></tr>{/each}
+      </tbody></table></div></div>
     {/if}
 
     {#if sub === 'users'}

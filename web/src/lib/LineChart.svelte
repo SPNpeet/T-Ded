@@ -17,7 +17,9 @@
     bands?: { from: number; to: number; color: string }[]
   } = $props()
 
-  const W = 640
+  // วาดตามความกว้างจริงของกล่อง (1 หน่วย = 1 พิกเซล) กราฟจึงไม่ถูกบีบบนมือถือ
+  let boxW = $state(0)
+  const W = $derived(Math.max(280, boxW || 640))
   const P = { l: 56, r: 40, t: 12, b: 32 }
   const all = $derived(series.flatMap((s) => s.points))
   const xs = $derived(all.map((p) => p.x))
@@ -35,7 +37,8 @@
   const xTicks = $derived.by(() => { const span = x1 - x0; if (span <= 0) return [x0]; const step = span <= 14 ? 2 : span <= 60 ? 7 : span <= 200 ? 14 : 30; const out: number[] = []; for (let t = Math.ceil(x0 / step) * step; t <= x1; t += step) out.push(t); if (!out.length || out[out.length - 1] < x1 - step / 2) out.push(x1); return out })
 </script>
 
-<svg class="chart" viewBox="0 0 {W} {height}" role="img">
+<div bind:clientWidth={boxW} style="width:100%">
+<svg class="chart" viewBox="0 0 {W} {height}" width={W} {height} role="img">
   {#each bands as b}
     <rect x={P.l} y={sy(b.to)} width={W - P.l - P.r} height={Math.max(0, sy(b.from) - sy(b.to))} fill={b.color} opacity="0.35" />
   {/each}
@@ -55,6 +58,7 @@
     {/each}
   {/each}
 </svg>
+</div>
 <div class="row wrap small" style="gap:14px;margin-top:4px">
   {#each series as s}
     <span class="row" style="gap:6px"><span style="width:18px;height:4px;background:{s.color};display:inline-block;border-radius:2px"></span>{s.name}</span>

@@ -28,6 +28,10 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // เวอร์ชันใหม่ต้องมีผลทันทีที่เปิดแอปรอบถัดไป ไม่ค้างของเก่า
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,svg,png,wasm,woff2}'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         navigateFallback: '/index.html',

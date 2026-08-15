@@ -9,6 +9,7 @@
   import Icon from '../lib/Icon.svelte'
   import MoneyBars from '../lib/MoneyBars.svelte'
   import Timeline from '../lib/Timeline.svelte'
+  import Collapse from '../lib/Collapse.svelte'
   import { speciesByCode } from '../lib/engine'
 
   let { cropId, tab = 'feed' }: { cropId: string; tab?: string } = $props()
@@ -178,6 +179,23 @@
         {/if}
       </div>
 
+      {#if s.nutrition}
+        {@const nu = s.nutrition}
+        <div class="card mt {nu.status === 'ok' ? 'tint-green' : nu.status === 'unknown' ? '' : 'tint-amber'}">
+          <div class="card-title"><h3>อาหารที่ควรใช้ตอนนี้ ({nu.stage.name_th})</h3><a class="btn link" href="#/feed">ดูตาราง</a></div>
+          <div class="row wrap" style="gap:6px">
+            <span class="pill info">โปรตีน {n(nu.stage.protein_min)}-{n(nu.stage.protein_max)}%</span>
+            <span class="pill neutral">เม็ด {nu.stage.pellet_mm} มม. {nu.stage.form_th}</span>
+            <span class="pill neutral">{nu.stage.meals_per_day} มื้อ: {nu.stage.feeding_times.join(' / ')}</span>
+          </div>
+          <div class="mt small">{nu.stage.note_th}</div>
+          {#if s.feed_on_hand?.protein_pct}
+            <div class="mt"><b>อาหารในสต๊อก:</b> {s.feed_on_hand.brand ?? ''} โปรตีน {n(s.feed_on_hand.protein_pct)}%{s.feed_on_hand.pellet_mm ? ` เม็ด ${s.feed_on_hand.pellet_mm} มม.` : ''} — <b>{nu.status_th}</b></div>
+          {/if}
+          {#each nu.messages_th as m}<div class="small mt">{m}</div>{/each}
+          {#if nu.price_per_kg_protein}<div class="small muted mt">ราคาต่อโปรตีน 1 กก. {n2(nu.price_per_kg_protein)} บาท · ปลาได้โปรตีนวันละ {n2(nu.protein_intake_kg_day)} กก.</div>{/if}
+        </div>
+      {/if}
       {#if s.weather}
         <div class="card mt">
           <div class="card-title"><h3>สภาพอากาศวันนี้</h3><span class="tiny muted">{s.weather.source?.includes('archive') ? 'ข้อมูลจริง' : 'พยากรณ์'} Open-Meteo</span></div>
@@ -253,12 +271,11 @@
         <div class="progress mt" style="height:14px"><div style="width:{Math.min(100, Math.round((s.avg_weight_g / (s.crop.target_weight_g ?? s.species.market_weight_g)) * 100))}%"></div></div>
         <div class="small muted mt" style="margin-top:4px">ความคืบหน้าสู่ขนาดจับ {Math.min(100, Math.round((s.avg_weight_g / (s.crop.target_weight_g ?? s.species.market_weight_g)) * 100))}%</div>
       </div>
-      <details class="card mt">
-        <summary>ดูกราฟการโตเทียบมาตรฐาน</summary>
+      <div class="card mt"><Collapse title="ดูกราฟการโตเทียบมาตรฐาน">
         {#if growthSeries.length}
           <LineChart series={growthSeries} xLabel={(x) => `วัน ${Math.round(x)}`} yLabel={(y) => `${Math.round(y)} ก.`} />
         {/if}
-      </details>
+      </Collapse></div>
       <div class="card mt">
         <h3>คำแนะนำ</h3>
         {#each g.advice_th as a}<div class="reason"><span>{a}</span></div>{/each}
@@ -351,10 +368,10 @@
           <div class="mt2"><Timeline total={s.day + pj.days_remaining} today={s.day} marks={[{ day: 0, label: 'ปล่อย', sub: thDate(s.crop.stocked_at, false) }, { day: s.day, label: 'วันนี้', sub: `${n(s.avg_weight_g)} ก.` }, { day: s.day + pj.days_remaining, label: 'จับขาย', sub: thDate(addDays(s.date, pj.days_remaining), false) }]} /></div>
           {#if !sellPrice && !s.market_price_per_kg}<div class="alert info small mt">ใส่ราคาขายเพื่อดูกำไรคาดการณ์ หรือดูราคาตลาดที่หน้าราคาปลา</div>{/if}
           {#if pj.curve?.length > 1}
-            <details class="mt2"><summary>ดูกราฟ (สำหรับผู้ที่ต้องการรายละเอียด)</summary>
+            <div class="mt2"><Collapse title="ดูกราฟ (สำหรับผู้ที่ต้องการรายละเอียด)">
               <LineChart series={[{ name: 'น้ำหนักเฉลี่ย (ก.)', color: '#0e8ea7', points: pj.curve.map((c: any) => ({ x: c.day, y: c.avg_weight_g })) }]} height={170} xLabel={(x) => `วัน ${Math.round(x)}`} />
               <LineChart series={[{ name: 'อาหารสะสม (กก.)', color: '#1f9d5a', points: pj.curve.map((c: any) => ({ x: c.day, y: c.feed_kg_cum + s.totals.fed_kg })) }]} height={150} xLabel={(x) => `วัน ${Math.round(x)}`} />
-            </details>
+            </Collapse></div>
           {/if}
         {/if}
       </div>

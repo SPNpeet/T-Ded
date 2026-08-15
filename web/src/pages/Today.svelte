@@ -99,7 +99,7 @@
     <div class="fab-row mt2">
       <a href="#/stock"><Icon name="stock" />รับอาหารเข้า</a>
       <a href="#/prices"><Icon name="chart" />ราคาปลา</a>
-      <a href="#/simulate"><Icon name="calc" />จำลองรุ่น</a>
+      <a href="#/feed"><Icon name="feed" />อาหาร/โปรตีน</a>
       <a href="#/diseases"><Icon name="map" />โรคในพื้นที่</a>
     </div>
 
@@ -139,8 +139,8 @@
           </div>
         {/if}
         <div class="grid2 mt">
-          <span class="btn success sm" style="width:100%" onclick={(e) => { e.preventDefault(); go(`/log/${p.crop_id}`) }} role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && go(`/log/${p.crop_id}`)}>บันทึกให้อาหารวันนี้</span>
-          <span class="btn ghost sm" style="width:100%">ดูรายละเอียดบ่อ</span>
+          <span class="btn success" style="min-height:52px" onclick={(e) => { e.preventDefault(); go(`/log/${p.crop_id}`) }} role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && go(`/log/${p.crop_id}`)}>บันทึกให้อาหาร</span>
+          <span class="btn ghost" style="min-height:52px">ดูรายละเอียด</span>
         </div>
       </a>
     {/each}

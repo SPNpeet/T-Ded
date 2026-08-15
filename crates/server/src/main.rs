@@ -5,6 +5,7 @@ mod calc;
 mod db;
 mod error;
 mod line;
+mod products;
 mod snapshot;
 mod weather;
 
@@ -56,6 +57,7 @@ async fn main() {
         cfg: Arc::new(cfg),
     };
     auth::ensure_bootstrap_admin(&state).await.expect("bootstrap admin");
+    products::seed_if_empty(&state).await.expect("seed feed products");
     line::spawn_scheduler(state.clone());
 
     let api = Router::new()
@@ -69,6 +71,11 @@ async fn main() {
         .route("/calc/simulate", post(calc::calc_simulate))
         .route("/calc/growth", post(calc::calc_growth))
         .route("/calc/health", post(calc::calc_health))
+        .route("/calc/mix", post(calc::calc_mix))
+        .route("/nutrition/{code}", get(calc::nutrition_stages))
+        .route("/nutrition-ingredients", get(calc::nutrition_ingredients))
+        .route("/feed-products", get(products::list).post(products::create))
+        .route("/feed-products/{id}", axum::routing::patch(products::update).delete(products::remove))
         .route("/weather", get(weather::get_weather))
         .route("/weather/forecast", get(weather::get_forecast))
         .route("/prices", get(api::list_prices))

@@ -2,7 +2,7 @@
 
 use aqua_engine::{
     compare_growth, health_score, performance, project, recommend, AdjustRule, EnvInput, FeedInput, HealthInput, PerfInput,
-    ProjectionInput, SpeciesProfile, StressLevel, WaterSample,
+    ProjectionInput, SpeciesProfile, StressLevel, WaterSample, FeedOnHand,
 };
 use axum::{extract::{Path, Query, State}, Json};
 use serde_json::{json, Value};
@@ -184,6 +184,10 @@ pub async fn crop_snapshot(st: &AppState, crop_id: &str, date: &str, org_id: &st
         farm_factor: crop["farm_factor"].as_f64(),
     });
 
+    let cf = &stock["current_feed"];
+    let on_hand = FeedOnHand { brand: cf["brand"].as_str().map(String::from), protein_pct: cf["protein_pct"].as_f64(), pellet_mm: cf["pellet_mm"].as_f64(), price_per_kg: cf["price_per_kg"].as_f64().or(if feed_price > 0.0 { Some(feed_price) } else { None }), form: cf["form"].as_str().map(String::from) };
+    let nutrition = aqua_engine::nutrition_advise(&species_code, est_w, rec.final_kg, &on_hand);
+
     let perf = performance(&PerfInput {
         stocked_count,
         stock_weight_g: stock_w,
@@ -273,6 +277,9 @@ pub async fn crop_snapshot(st: &AppState, crop_id: &str, date: &str, org_id: &st
     if days_since_weigh >= 14 && day >= 14 {
         alerts.push(json!({ "level": "info", "text": format!("ไม่ได้ชั่งน้ำหนักมา {} วัน ควรสุ่มชั่งเพื่อปรับอาหาร", days_since_weigh) }));
     }
+    if nutrition.status == "protein_low" || nutrition.status == "pellet_mismatch" {
+        if let Some(m) = nutrition.messages_th.first() { alerts.push(json!({ "level": "info", "text": m })); }
+    }
     if let Some(u) = &withdrawal_until {
         alerts.push(json!({ "level": "warn", "text": format!("อยู่ในระยะหยุดยา ห้ามจับขายก่อนวันที่ {}", u) }));
     }
@@ -291,6 +298,8 @@ pub async fn crop_snapshot(st: &AppState, crop_id: &str, date: &str, org_id: &st
         "water": water_json,
         "env_used": env,
         "recommendation": rec,
+        "nutrition": nutrition,
+        "feed_on_hand": on_hand,
         "performance": perf,
         "growth": growth,
         "health": health,

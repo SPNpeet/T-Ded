@@ -80,3 +80,21 @@ pub async fn calc_health(State(_st): State<AppState>, Json(b): Json<Value>) -> A
     let input: HealthInput = serde_json::from_value(b.get("input").cloned().unwrap_or(json!({})))?;
     Ok(Json(json!(health_score(&input, &sp.water))))
 }
+
+pub async fn nutrition_stages(State(_st): State<AppState>, axum::extract::Path(code): axum::extract::Path<String>) -> Json<Value> {
+    Json(json!({ "stages": aqua_engine::stages_for(&code), "tips": aqua_engine::feed_tips().into_iter().map(|(a, b)| json!({ "title": a, "body": b })).collect::<Vec<_>>() }))
+}
+
+pub async fn nutrition_ingredients(State(_st): State<AppState>) -> Json<Value> {
+    Json(json!(aqua_engine::default_ingredients()))
+}
+
+/// body: { ingredients: [...], batch_kg? } หรือ { pearson: { protein_a, protein_b, target } }
+pub async fn calc_mix(State(_st): State<AppState>, Json(b): Json<Value>) -> ApiResult<Json<Value>> {
+    if let Some(p) = b.get("pearson") {
+        let g = |k: &str| p.get(k).and_then(|v| v.as_f64()).unwrap_or(0.0);
+        return Ok(Json(json!({ "pearson": aqua_engine::pearson_square(g("protein_a"), g("protein_b"), g("target")) })));
+    }
+    let list: Vec<aqua_engine::Ingredient> = serde_json::from_value(b.get("ingredients").cloned().unwrap_or(json!([])))?;
+    Ok(Json(json!(aqua_engine::feed_mix(&list, b.get("batch_kg").and_then(|v| v.as_f64())))))
+}
