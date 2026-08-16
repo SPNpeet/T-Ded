@@ -47,6 +47,18 @@
     loadSession()
   }
   let myName = (session.user?.name ?? '')
+  let orgName = (session.user?.org_name ?? '')
+  async function saveOrg() {
+    if (!orgName.trim()) return toast('ใส่ชื่อกลุ่ม/องค์กรก่อน', 'error')
+    try {
+      await api.patch('/org', { name: orgName.trim() })
+      await loadSession()
+      toast('บันทึกชื่อกลุ่มแล้ว', 'success')
+    } catch (e: any) {
+      toast(e.message, 'error')
+    }
+  }
+
   async function saveName() {
     if (!myName.trim()) return toast('ใส่ชื่อก่อนครับ', 'error')
     try {
@@ -135,6 +147,9 @@
     <label for="myname">ชื่อที่แสดงในแอป</label>
     <input id="myname" bind:value={myName} placeholder="เช่น ลุงสมชาย" />
     <button class="btn ghost mt" onclick={saveName}>บันทึกชื่อ</button>
+    <label for="orgname">ชื่อกลุ่ม/องค์กร <span class="hint">(แสดงในหน้าแพ็กเกจ)</span></label>
+    <input id="orgname" bind:value={orgName} placeholder="เช่น ฟาร์มลุงสมชาย" />
+    <button class="btn ghost mt" onclick={saveOrg}>บันทึกชื่อกลุ่ม</button>
   </div>
 
   <div class="card mt">

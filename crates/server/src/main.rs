@@ -104,6 +104,7 @@ async fn main() {
         .route("/auth/logout", post(auth::logout))
         .route("/auth/pin", post(auth::change_pin))
         .route("/me", get(auth::me).patch(auth::update_me))
+        .route("/org", axum::routing::patch(auth::update_org))
         .route("/users", post(auth::create_user))
         .route("/farms", get(api::list_farms).post(api::create_farm))
         .route("/farms/{id}", get(api::get_farm).patch(api::update_farm))

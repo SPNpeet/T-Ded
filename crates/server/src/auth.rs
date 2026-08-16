@@ -236,6 +236,21 @@ pub async fn update_me(State(st): State<AppState>, user: AuthUser, Json(req): Js
     Ok(Json(user_json(&st, &user.id).await?))
 }
 
+/// เจ้าของฟาร์มหรือแอดมินแก้ชื่อองค์กร/กลุ่มของตัวเอง
+pub async fn update_org(State(st): State<AppState>, user: AuthUser, Json(req): Json<UpdateMeReq>) -> ApiResult<Json<Value>> {
+    if user.role == "worker" {
+        return Err(AppError::Forbidden);
+    }
+    let Some(name) = req.name.as_deref().map(str::trim).filter(|s| !s.is_empty()) else {
+        return Err(AppError::BadRequest("กรอกชื่อ".into()));
+    };
+    if name.chars().count() > 80 {
+        return Err(AppError::BadRequest("ชื่อยาวเกินไป".into()));
+    }
+    sqlx::query("UPDATE orgs SET name = ? WHERE id = ?").bind(name).bind(&user.org_id).execute(&st.db).await?;
+    Ok(Json(user_json(&st, &user.id).await?))
+}
+
 pub async fn me(State(st): State<AppState>, user: AuthUser) -> ApiResult<Json<Value>> {
     Ok(Json(user_json(&st, &user.id).await?))
 }
