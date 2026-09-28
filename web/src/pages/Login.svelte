@@ -3,12 +3,13 @@
   import { api, setToken, needsApiSetup, getApiBase, IS_STATIC_HOST } from '../lib/api'
   import { loadSession, toast, go } from '../lib/ui.svelte'
   import { PROVINCES } from '../lib/format'
+  import { initFarm, setLocalMode } from '../lib/local'
 
   let { mode = 'login' }: { mode?: string } = $props()
   let tab = $state(mode === 'register' ? 'register' : 'login')
   let phone = $state('')
   let pin = $state('')
-  let name = $state('')
+  let name2 = $state('')
   let farmName = $state('')
   let province = $state('')
   let orgCode = $state('')
@@ -34,7 +35,7 @@
     if (needsApiSetup()) return go('/server')
     busy = true
     try {
-      const r = await api.post('/auth/register', { phone, pin, name, farm_name: farmName, province: province || null, org_code: orgCode || null, lat: coords?.lat ?? null, lng: coords?.lng ?? null })
+      const r = await api.post('/auth/register', { phone, pin, name: name2, farm_name: farmName, province: province || null, org_code: orgCode || null, lat: coords?.lat ?? null, lng: coords?.lng ?? null })
       setToken(r.token)
       await loadSession()
       toast('สร้างฟาร์มเรียบร้อย เพิ่มบ่อแรกได้เลย', 'success')
@@ -45,6 +46,17 @@
       busy = false
     }
   }
+  async function startLocal() {
+    const name = farmName.trim() || 'ฟาร์มของฉัน'
+    const ok = confirm(`เริ่มใช้แบบเก็บข้อมูลในเครื่อง (ชื่อฟาร์ม: ${name})\n\nข้อมูลจะอยู่ในมือถือเครื่องนี้เท่านั้น ใช้ได้ครบทุกฟังก์ชันโดยไม่ต้องมีเซิร์ฟเวอร์ และไม่มีค่าบริการ`)
+    if (!ok) return
+    initFarm(name, name2.trim() || 'เจ้าของฟาร์ม', province || undefined, coords?.lat, coords?.lng)
+    setLocalMode(true)
+    await loadSession()
+    toast('เริ่มใช้งานแบบเก็บในเครื่องแล้ว เพิ่มบ่อแรกได้เลย', 'success')
+    go('/ponds')
+  }
+
   function grabGps() {
     if (!navigator.geolocation) return toast('อุปกรณ์นี้ไม่รองรับ GPS', 'error')
     useGps = true
@@ -84,7 +96,7 @@
         <label for="fname">ชื่อฟาร์ม</label>
         <input id="fname" bind:value={farmName} placeholder="เช่น ฟาร์มลุงสมชาย" required />
         <label for="name">ชื่อของคุณ</label>
-        <input id="name" bind:value={name} placeholder="ชื่อ-นามสกุล หรือชื่อเล่น" required />
+        <input id="name" bind:value={name2} placeholder="ชื่อ-นามสกุล หรือชื่อเล่น" required />
         <label for="rphone">เบอร์โทรศัพท์ <span class="hint">(ใช้เข้าสู่ระบบ)</span></label>
         <input id="rphone" type="tel" inputmode="numeric" bind:value={phone} required />
         <label for="rpin">ตั้งรหัส PIN <span class="hint">(ตัวเลข 4-8 หลัก จำง่าย ๆ)</span></label>
@@ -113,7 +125,12 @@
         {/if}
       </div>
     {/if}
-    <p class="center small muted">ยังไม่พร้อมสมัคร? ลองเครื่องคำนวณก่อนได้</p>
+    <div class="card tint-cyan mt" style="box-shadow:none">
+      <b>ไม่อยากยุ่งกับเซิร์ฟเวอร์?</b>
+      <div class="small mt">ใช้แบบเก็บข้อมูลในเครื่องได้เลย ครบทุกฟังก์ชัน ไม่มีค่าบริการ ข้อมูลอยู่ในมือถือของคุณ (สำรองเป็นไฟล์ได้ในหน้าตั้งค่า)</div>
+      <button class="btn primary mt" onclick={startLocal}>เริ่มใช้แบบเก็บในเครื่อง</button>
+    </div>
+    <p class="center small muted mt2">หรือลองเครื่องคำนวณก่อนได้</p>
     <div class="grid2 mt">
       <a class="btn ghost" href="#/calc">คำนวณอาหารปลา</a>
       <a class="btn ghost" href="#/simulate">จำลองรุ่นเลี้ยง</a>

@@ -1,5 +1,6 @@
 // สถานะ UI ร่วม: toast, ออนไลน์/ออฟไลน์, ผู้ใช้, ฟาร์มที่เลือก, เส้นทาง
 import { api, getToken, setToken, flushQueue, cachedGet } from './api'
+import { isLocalMode, setLocalMode } from './local'
 
 type Toast = { id: number; text: string; kind: 'info' | 'success' | 'error' }
 let toastId = 0
@@ -42,7 +43,7 @@ export const isStaff = () => session.user?.role === 'officer' || session.user?.r
 
 export async function loadSession() {
   session.loading = true
-  if (!getToken()) {
+  if (!isLocalMode() && !getToken()) {
     session.user = null
     session.loading = false
     return
@@ -68,6 +69,12 @@ export function selectFarm(id: string) {
 }
 
 export async function logout() {
+  if (isLocalMode()) {
+    setLocalMode(false)
+    session.user = null
+    go('/')
+    return
+  }
   try {
     await api.post('/auth/logout')
   } catch {

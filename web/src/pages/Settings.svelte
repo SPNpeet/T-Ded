@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte'
+  import { isLocalMode, exportJson, importJson } from '../lib/local'
   import { api, readQueue, dropQueued, flushQueue } from '../lib/api'
-  import { session, currentFarm, toast, loadSession, ui } from '../lib/ui.svelte'
+  import { session, currentFarm, toast, loadSession, ui, go } from '../lib/ui.svelte'
   import { PROVINCES, thDateTime } from '../lib/format'
   import TopBar from '../lib/TopBar.svelte'
 
@@ -48,6 +49,33 @@
   }
   let myName = (session.user?.name ?? '')
   let orgName = (session.user?.org_name ?? '')
+  function exportLocal() {
+    const blob = new Blob([exportJson()], { type: 'application/json' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = 'teedet-backup-' + new Date().toISOString().slice(0, 10) + '.json'
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000)
+    toast('บันทึกไฟล์สำรองแล้ว เก็บไว้ในที่ปลอดภัย', 'success')
+  }
+  function importLocal(e: Event) {
+    const file = (e.target as HTMLInputElement).files?.[0]
+    if (!file) return
+    if (!confirm('นำเข้าไฟล์นี้จะทับข้อมูลเดิมทั้งหมดในเครื่อง ยืนยันหรือไม่')) return
+    const fr = new FileReader()
+    fr.onload = async () => {
+      try {
+        importJson(String(fr.result))
+        await loadSession()
+        toast('นำเข้าข้อมูลเรียบร้อย', 'success')
+        go('/')
+      } catch (err: any) {
+        toast('ไฟล์ไม่ถูกต้อง: ' + err.message, 'error')
+      }
+    }
+    fr.readAsText(file)
+  }
+
   async function saveOrg() {
     if (!orgName.trim()) return toast('ใส่ชื่อกลุ่ม/องค์กรก่อน', 'error')
     try {
@@ -141,6 +169,17 @@
       <button class="btn primary mt" onclick={getLineCode}>ขอรหัสเชื่อม LINE</button>
     {/if}
   </div>
+
+{#if isLocalMode()}
+    <div class="card mt tint-cyan" style="box-shadow:none">
+      <h3>ข้อมูลเก็บในเครื่องนี้</h3>
+      <p class="small mt">ข้อมูลฟาร์มทั้งหมดอยู่ในมือถือเครื่องนี้เท่านั้น ถ้าเปลี่ยนเครื่องหรือล้างแอป ข้อมูลจะหาย <b>ควรสำรองเป็นไฟล์เก็บไว้ทุกเดือน</b></p>
+      <div class="grid2 mt">
+        <button class="btn primary" onclick={exportLocal}>บันทึกไฟล์สำรอง</button>
+        <label class="btn ghost" style="margin:0;display:flex;align-items:center;justify-content:center;cursor:pointer">นำเข้าไฟล์สำรอง<input type="file" accept="application/json,.json" onchange={importLocal} style="display:none" /></label>
+      </div>
+    </div>
+  {/if}
 
   <div class="card mt">
     <h3>ชื่อของฉัน</h3>

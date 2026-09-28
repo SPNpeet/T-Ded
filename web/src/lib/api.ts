@@ -1,5 +1,6 @@
 // ตัวกลางเรียก API + คิวออฟไลน์ (เก็บใน localStorage) + cache หน้าอ่าน
 import { toast } from './ui.svelte'
+import { isLocalMode, handle as localHandle } from './local'
 
 const TOKEN_KEY = 'teedet.token'
 const QUEUE_KEY = 'teedet.queue'
@@ -33,7 +34,7 @@ export function setApiBase(v: string | null) {
 }
 /** ต้องให้ผู้ใช้ตั้งที่อยู่เซิร์ฟเวอร์ก่อนหรือยัง */
 export function needsApiSetup(): boolean {
-  return IS_STATIC_HOST && !getApiBase()
+  return !isLocalMode() && IS_STATIC_HOST && !getApiBase()
 }
 /** ทดสอบว่าที่อยู่นี้เป็นเซิร์ฟเวอร์ทีเด็ดปลาน้ำจืดจริง */
 export async function testApiBase(v: string): Promise<boolean> {
@@ -71,6 +72,14 @@ async function request<T = any>(method: string, path: string, body?: unknown, op
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   const t = getToken()
   if (t) headers['Authorization'] = `Bearer ${t}`
+  if (isLocalMode()) {
+    // โหมดเก็บในเครื่อง: ไม่ต้องมีเซิร์ฟเวอร์
+    try {
+      return (await localHandle(method, path, body)) as T
+    } catch (e: any) {
+      throw new ApiError(400, e?.message || 'ทำรายการไม่สำเร็จ')
+    }
+  }
   if (needsApiSetup()) {
     throw new ApiError(0, 'ยังไม่ได้ตั้งที่อยู่เซิร์ฟเวอร์ของฟาร์ม — ไปที่ "ตั้งค่าเซิร์ฟเวอร์" เพื่อใส่ที่อยู่ก่อน')
   }
