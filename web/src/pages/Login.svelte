@@ -4,6 +4,7 @@
   import { loadSession, toast, go } from '../lib/ui.svelte'
   import { PROVINCES } from '../lib/format'
   import { initFarm, setLocalMode } from '../lib/local'
+  import BrandMark from '../lib/BrandMark.svelte'
 
   let { mode = 'login' }: { mode?: string } = $props()
   let tab = $state(mode === 'register' ? 'register' : 'login')
@@ -76,7 +77,7 @@
 
 <div class="auth-wrap">
   <div class="logo-lockup">
-    <div style="background:#fff;border-radius:22px;padding:14px 18px;box-shadow:var(--shadow)"><img src="{BASE}logo-full.png" alt="ทีเด็ดปลาน้ำจืด" style="width:260px;height:auto;display:block" /></div>
+    <div style="background:#fff;border-radius:22px;padding:14px 18px;box-shadow:var(--shadow)"><BrandMark size="lg" /></div>
   </div>
   <div class="card auth-card">
     <div class="tabs">
@@ -130,6 +131,7 @@
       <div class="small mt">ใช้แบบเก็บข้อมูลในเครื่องได้เลย ครบทุกฟังก์ชัน ไม่มีค่าบริการ ข้อมูลอยู่ในมือถือของคุณ (สำรองเป็นไฟล์ได้ในหน้าตั้งค่า)</div>
       <button class="btn primary mt" onclick={startLocal}>เริ่มใช้แบบเก็บในเครื่อง</button>
     </div>
+    <a class="btn success mt2" href="#/planner">วางโปรแกรมการเลี้ยง (ไม่ต้องสมัคร)</a>
     <p class="center small muted mt2">หรือลองเครื่องคำนวณก่อนได้</p>
     <div class="grid2 mt">
       <a class="btn ghost" href="#/calc">คำนวณอาหารปลา</a>

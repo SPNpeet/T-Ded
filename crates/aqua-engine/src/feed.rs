@@ -180,9 +180,9 @@ mod tests {
     #[test]
     fn out_of_range_warns() {
         let mut i = base(None);
-        i.avg_weight_g = 20.0;
+        i.avg_weight_g = 0.5;
         let r = recommend(&i);
         assert_eq!(r.warnings.len(), 1);
-        assert_abs_diff_eq!(r.pct, 4.5);
+        assert_abs_diff_eq!(r.pct, 8.0);
     }
 }

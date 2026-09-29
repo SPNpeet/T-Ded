@@ -1,12 +1,13 @@
 <script lang="ts">
+  import { brand } from '../lib/brand'
   // นโยบายความเป็นส่วนตัวและเงื่อนไขการใช้งาน (จำเป็นสำหรับ Play Store / App Store และ PDPA)
   import TopBar from '../lib/TopBar.svelte'
   let { kind = 'privacy' }: { kind?: string } = $props()
   const UPDATED = '15 สิงหาคม 2569'
-  const CONTACT = 'ผู้ดูแลระบบทีเด็ดปลาน้ำจืด'
+  const CONTACT = 'ผู้ดูแลระบบ' + brand.appName
 </script>
 
-<TopBar title={kind === 'terms' ? 'เงื่อนไขการใช้งาน' : 'นโยบายความเป็นส่วนตัว'} sub="ทีเด็ดปลาน้ำจืด" back="/menu" />
+<TopBar title={kind === 'terms' ? 'เงื่อนไขการใช้งาน' : 'นโยบายความเป็นส่วนตัว'} sub={brand.appName} back="/menu" />
 <main class="page">
   {#if kind === 'privacy'}
     <div class="card">
@@ -50,7 +51,7 @@
     <div class="card">
       <p class="small muted">ปรับปรุงล่าสุด {UPDATED}</p>
       <h3 class="mt">1. ลักษณะของบริการ</h3>
-      <p class="mt">ทีเด็ดปลาน้ำจืดเป็นเครื่องมือช่วยคำนวณและบันทึกข้อมูลการเลี้ยงปลาน้ำจืด ค่าที่แสดงเป็น <b>คำแนะนำจากตารางมาตรฐานและข้อมูลที่ท่านกรอก</b> ไม่ใช่คำสั่งทางวิชาการหรือคำวินิจฉัยโรค</p>
+      <p class="mt">{brand.appName}เป็นเครื่องมือช่วยคำนวณและบันทึกข้อมูลการเลี้ยงปลาน้ำจืด ค่าที่แสดงเป็น <b>คำแนะนำจากตารางมาตรฐานและข้อมูลที่ท่านกรอก</b> ไม่ใช่คำสั่งทางวิชาการหรือคำวินิจฉัยโรค</p>
 
       <h3 class="mt2">2. ความรับผิดชอบ</h3>
       <div class="reason"><span>การตัดสินใจให้อาหาร ใช้ยา หรือจับขาย เป็นดุลพินิจของท่าน ผู้พัฒนาไม่รับผิดชอบต่อความเสียหายที่เกิดจากการใช้ข้อมูลในแอป</span></div>

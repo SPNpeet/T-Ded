@@ -3,18 +3,37 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { VitePWA } from 'vite-plugin-pwa'
 
 const base = process.env.BASE_PATH || '/'
+const BRANDS = {
+  teedet: { name: 'ทีเด็ดปลาน้ำจืด', short: 'ทีเด็ดปลา', theme: '#1B2440', desc: 'ผู้ช่วยฟาร์มปลาน้ำจืดประจำวัน: อาหาร น้ำ การโต ต้นทุน กำไร' },
+  nb: { name: 'NB โปรแกรมเลี้ยงปลา', short: 'NB เลี้ยงปลา', theme: '#123B7A', desc: 'วางโปรแกรมการเลี้ยงปลาด้วยอาหาร NB รู้ล่วงหน้าว่าโตเท่าไร ใช้กี่กระสอบ' },
+} as const
 
-export default defineConfig({
+
+export default defineConfig(({ mode }) => {
+  // vite build --mode nb (อ่าน .env.nb) หรือกำหนด VITE_BRAND เอง
+  const brandId = (process.env.VITE_BRAND || (mode === 'nb' ? 'nb' : 'teedet')) as keyof typeof BRANDS
+  const B = BRANDS[brandId] ?? BRANDS.teedet
+  return {
   base,
+  // แต่ละแบรนด์มีไอคอน/ไฟล์สาธารณะของตัวเอง ห้ามปนกัน
+  publicDir: brandId === 'nb' ? 'public-nb' : 'public',
   plugins: [
+    {
+      name: 'brand-html',
+      transformIndexHtml: (html: string) =>
+        html
+          .replace(/<title>[^<]*<\/title>/, `<title>${B.name}</title>`)
+          .replace(/content="ทีเด็ดปลา"/, `content="${B.short}"`)
+          .replace(/name="theme-color" content="[^"]*"/, `name="theme-color" content="${B.theme}"`),
+    },
     svelte(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/*.png', 'mark.png', 'logo-full.png', 'feed-products.json'],
+      includeAssets: ['icons/*.png', 'feed-products.json'],
       manifest: {
-        name: 'ทีเด็ดปลาน้ำจืด',
-        short_name: 'ทีเด็ดปลา',
-        description: 'ผู้ช่วยฟาร์มปลาน้ำจืดประจำวัน: อาหาร น้ำ การโต ต้นทุน กำไร',
+        name: B.name,
+        short_name: B.short,
+        description: B.desc,
         lang: 'th',
         dir: 'ltr',
         start_url: base,
@@ -22,7 +41,7 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#F4F7FB',
-        theme_color: '#1B2440',
+        theme_color: B.theme,
         categories: ['productivity', 'business'],
         icons: [
           { src: base + 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
@@ -64,4 +83,5 @@ export default defineConfig({
     proxy: { '/api': { target: 'http://127.0.0.1:8787', changeOrigin: true } },
   },
   build: { target: 'es2022', sourcemap: false },
+}
 })

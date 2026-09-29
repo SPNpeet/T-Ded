@@ -139,22 +139,71 @@ pub async fn update_farm(State(st): State<AppState>, user: AuthUser, Path(id): P
 
 // ---------- บ่อ ----------
 
-pub async fn create_pond(State(st): State<AppState>, user: AuthUser, Path(farm_id): Path<String>, Json(b): Json<Value>) -> ApiResult<Json<Value>> {
+const POND_TEXT: &[&str] = &["name", "pond_type", "shape", "water_source", "aeration", "note"];
+const POND_NUM: &[&str] = &["area_rai", "area_m2", "depth_m", "width_m", "length_m", "diameter_m", "lat", "lng", "location_accuracy_m"];
+
+/// เติมพื้นที่ที่คำนวณได้จากขนาด ถ้าผู้ใช้ไม่ได้กรอกพื้นที่มาเอง (1 ไร่ = 1,600 ตร.ม.)
+fn fill_pond_area(b: &mut Value) {
+    let shape = s(b, "shape").unwrap_or_default();
+    let from_dims = match shape.as_str() {
+        "rect" => f(b, "width_m").zip(f(b, "length_m")).map(|(w, l)| w * l),
+        "round" => f(b, "diameter_m").map(|d| std::f64::consts::PI * (d / 2.0).powi(2)),
+        _ => None,
+    };
+    let m2 = from_dims.or_else(|| f(b, "area_m2")).or_else(|| f(b, "area_rai").map(|r| r * 1600.0)).filter(|v| *v > 0.0);
+    if let (Some(m2), Some(o)) = (m2, b.as_object_mut()) {
+        o.insert("area_m2".into(), json!((m2 * 10.0).round() / 10.0));
+        o.insert("area_rai".into(), json!((m2 / 1600.0 * 1000.0).round() / 1000.0));
+    }
+}
+
+fn check_pond_values(b: &Value) -> ApiResult<()> {
+    for k in ["area_rai", "area_m2", "depth_m", "width_m", "length_m", "diameter_m"] {
+        if let Some(v) = f(b, k) {
+            if !(0.0..=1_000_000.0).contains(&v) {
+                return Err(AppError::BadRequest(format!("ค่า {k} ไม่ถูกต้อง")));
+            }
+        }
+    }
+    if let Some(lat) = f(b, "lat") {
+        if !(-90.0..=90.0).contains(&lat) {
+            return Err(AppError::BadRequest("พิกัดไม่ถูกต้อง".into()));
+        }
+    }
+    if let Some(lng) = f(b, "lng") {
+        if !(-180.0..=180.0).contains(&lng) {
+            return Err(AppError::BadRequest("พิกัดไม่ถูกต้อง".into()));
+        }
+    }
+    Ok(())
+}
+
+pub async fn create_pond(State(st): State<AppState>, user: AuthUser, Path(farm_id): Path<String>, Json(mut b): Json<Value>) -> ApiResult<Json<Value>> {
     assert_farm_access(&st, &user, &farm_id).await?;
     crate::billing::check_can_add(&st, &user.org_id, "บ่อ").await?;
     let name = s(&b, "name").ok_or_else(|| AppError::BadRequest("กรอกชื่อบ่อ".into()))?;
+    check_pond_values(&b)?;
+    fill_pond_area(&mut b);
     let id = new_id();
-    let area_rai = f(&b, "area_rai");
-    let area_m2 = f(&b, "area_m2").or(area_rai.map(|r| r * 1600.0));
     let order: i64 = sqlx::query("SELECT COALESCE(MAX(sort_order), 0) + 1 AS n FROM ponds WHERE farm_id = ?").bind(&farm_id).fetch_one(&st.db).await?.get("n");
-    sqlx::query("INSERT INTO ponds (id, farm_id, name, pond_type, area_rai, area_m2, depth_m, sort_order, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    sqlx::query("INSERT INTO ponds (id, farm_id, name, pond_type, area_rai, area_m2, depth_m, shape, width_m, length_m, diameter_m, water_source, aeration, note, lat, lng, location_accuracy_m, sort_order, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(&id)
         .bind(&farm_id)
         .bind(&name)
         .bind(s(&b, "pond_type").unwrap_or_else(|| "earthen".into()))
-        .bind(area_rai)
-        .bind(area_m2)
+        .bind(f(&b, "area_rai"))
+        .bind(f(&b, "area_m2"))
         .bind(f(&b, "depth_m"))
+        .bind(s(&b, "shape"))
+        .bind(f(&b, "width_m"))
+        .bind(f(&b, "length_m"))
+        .bind(f(&b, "diameter_m"))
+        .bind(s(&b, "water_source"))
+        .bind(s(&b, "aeration"))
+        .bind(s(&b, "note"))
+        .bind(f(&b, "lat"))
+        .bind(f(&b, "lng"))
+        .bind(f(&b, "location_accuracy_m"))
         .bind(order)
         .bind(now_iso())
         .execute(&st.db)
@@ -163,20 +212,54 @@ pub async fn create_pond(State(st): State<AppState>, user: AuthUser, Path(farm_i
     Ok(Json(json!({ "id": id })))
 }
 
-pub async fn update_pond(State(st): State<AppState>, user: AuthUser, Path(id): Path<String>, Json(b): Json<Value>) -> ApiResult<Json<Value>> {
+/// แก้เฉพาะช่องที่ส่งมา ส่ง null = ล้างค่า (เช่นเปลี่ยนจากบ่อสี่เหลี่ยมเป็นบ่อกลม ต้องล้างกว้าง/ยาวเดิม)
+pub async fn update_pond(State(st): State<AppState>, user: AuthUser, Path(id): Path<String>, Json(mut b): Json<Value>) -> ApiResult<Json<Value>> {
     let farm_id = farm_of_pond(&st, &id).await?;
     assert_farm_access(&st, &user, &farm_id).await?;
-    sqlx::query("UPDATE ponds SET name = COALESCE(?, name), pond_type = COALESCE(?, pond_type), area_rai = COALESCE(?, area_rai), area_m2 = COALESCE(?, area_m2), depth_m = COALESCE(?, depth_m), active = COALESCE(?, active), sort_order = COALESCE(?, sort_order) WHERE id = ?")
-        .bind(s(&b, "name"))
-        .bind(s(&b, "pond_type"))
-        .bind(f(&b, "area_rai"))
-        .bind(f(&b, "area_m2"))
-        .bind(f(&b, "depth_m"))
-        .bind(i(&b, "active"))
-        .bind(i(&b, "sort_order"))
-        .bind(&id)
-        .execute(&st.db)
-        .await?;
+    check_pond_values(&b)?;
+    let sizing = ["shape", "width_m", "length_m", "diameter_m", "area_rai", "area_m2"].iter().any(|k| b.get(*k).is_some());
+    if sizing {
+        fill_pond_area(&mut b);
+    }
+    let mut sets: Vec<String> = Vec::new();
+    let mut texts: Vec<Option<String>> = Vec::new();
+    let mut nums: Vec<Option<f64>> = Vec::new();
+    let mut order: Vec<bool> = Vec::new();
+    for k in POND_TEXT {
+        if b.get(*k).is_some() {
+            if *k == "name" && s(&b, k).is_none() {
+                return Err(AppError::BadRequest("กรอกชื่อบ่อ".into()));
+            }
+            sets.push(format!("{k} = ?"));
+            texts.push(s(&b, k));
+            order.push(true);
+        }
+    }
+    for k in POND_NUM {
+        if b.get(*k).is_some() {
+            sets.push(format!("{k} = ?"));
+            nums.push(f(&b, k));
+            order.push(false);
+        }
+    }
+    for k in ["active", "sort_order"] {
+        if let Some(v) = i(&b, k) {
+            sets.push(format!("{k} = ?"));
+            nums.push(Some(v as f64));
+            order.push(false);
+        }
+    }
+    if sets.is_empty() {
+        return Ok(Json(json!({ "ok": true })));
+    }
+    let sql = format!("UPDATE ponds SET {} WHERE id = ?", sets.join(", "));
+    let mut q = sqlx::query(&sql);
+    let (mut ti, mut ni) = (texts.into_iter(), nums.into_iter());
+    for is_text in order {
+        q = if is_text { q.bind(ti.next().flatten()) } else { q.bind(ni.next().flatten()) };
+    }
+    q.bind(&id).execute(&st.db).await?;
+    audit(&st, &user, "update", "pond", &id, None).await;
     Ok(Json(json!({ "ok": true })))
 }
 
@@ -197,7 +280,12 @@ pub async fn create_crop(State(st): State<AppState>, user: AuthUser, Path(pond_i
     let w = req_f(&b, "stock_weight_g", "น้ำหนักปลาตอนปล่อย")?;
     let id = new_id();
     let stocked_at = date_or_today(&b, "stocked_at");
-    sqlx::query("INSERT INTO crops (id, pond_id, farm_id, species_code, stocked_at, stocked_count, stock_weight_g, fry_price_each, target_weight_g, target_harvest_at, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    // โปรแกรมการเลี้ยงที่วางไว้ (ถ้ามี) เก็บทั้งก้อน ใช้บอกว่าวันนี้ควรใช้เบอร์ไหนเท่าไร
+    let plan_json = b.get("plan").filter(|v| v.is_object()).map(|v| v.to_string());
+    if plan_json.as_ref().map(|p| p.len() > 200_000).unwrap_or(false) {
+        return Err(AppError::BadRequest("โปรแกรมการเลี้ยงใหญ่เกินไป".into()));
+    }
+    sqlx::query("INSERT INTO crops (id, pond_id, farm_id, species_code, stocked_at, stocked_count, stock_weight_g, fry_price_each, target_weight_g, target_harvest_at, note, created_at, plan_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(&id)
         .bind(&pond_id)
         .bind(&farm_id)
@@ -210,6 +298,7 @@ pub async fn create_crop(State(st): State<AppState>, user: AuthUser, Path(pond_i
         .bind(s(&b, "target_harvest_at"))
         .bind(s(&b, "note"))
         .bind(now_iso())
+        .bind(plan_json)
         .execute(&st.db)
         .await?;
     // ค่าลูกปลาเป็นค่าใช้จ่ายแรกของรุ่น
@@ -273,7 +362,14 @@ pub async fn list_crops(State(st): State<AppState>, user: AuthUser, Path(farm_id
             .fetch_all(&st.db)
             .await?
     };
-    Ok(Json(json!(rows_to_json(&rows))))
+    let mut out = rows_to_json(&rows);
+    for c in out.iter_mut() {
+        if let Some(o) = c.as_object_mut() {
+            let has = o.remove("plan_json").map(|v| v.is_object()).unwrap_or(false);
+            o.insert("has_plan".into(), json!(has));
+        }
+    }
+    Ok(Json(json!(out)))
 }
 
 // ---------- บันทึกประจำวัน ----------

@@ -284,6 +284,13 @@ pub async fn crop_snapshot(st: &AppState, crop_id: &str, date: &str, org_id: &st
         alerts.push(json!({ "level": "warn", "text": format!("อยู่ในระยะหยุดยา ห้ามจับขายก่อนวันที่ {}", u) }));
     }
 
+    // โปรแกรมทั้งรุ่นไม่ต้องส่งทุกครั้ง ส่งเฉพาะของวันนี้ + เส้นย่อสำหรับกราฟ
+    let plan_t = plan_today(&crop, day);
+    let mut crop = crop;
+    if let Some(o) = crop.as_object_mut() {
+        let has = o.remove("plan_json").map(|v| v.is_object()).unwrap_or(false);
+        o.insert("has_plan".into(), json!(has));
+    }
     Ok(json!({
         "date": date,
         "crop": crop,
@@ -308,6 +315,7 @@ pub async fn crop_snapshot(st: &AppState, crop_id: &str, date: &str, org_id: &st
         "market_price_per_kg": market_price,
         "today_log": today_log,
         "withdrawal_until": withdrawal_until,
+        "plan_today": plan_t,
         "alerts": alerts,
         "totals": { "fed_kg": fed_total, "dead": dead, "expenses": expenses, "feed_cost": feed_cost, "cost_total": cost_total, "revenue": revenue, "harvested_kg": harvested_kg },
     }))
@@ -452,4 +460,28 @@ pub async fn morning_summary_text(st: &AppState, farm_id: &str, org_id: &str) ->
     }
     lines.push(format!("รวมวันนี้ {:.1} กก.", total));
     Ok(lines.join("\n"))
+}
+
+/// ตามโปรแกรมที่วางไว้ วันนี้ (วันที่ day ของรุ่น) ต้องใช้เบอร์ไหน วันละเท่าไร และปลาควรหนักเท่าไร
+/// days ในแผนเก็บเป็น [วัน, น้ำหนัก, อาหาร กก., มื้อ, รหัสเบอร์]
+fn plan_today(crop: &Value, day: u32) -> Value {
+    let Some(plan) = crop.get("plan_json").filter(|p| p.is_object()) else { return Value::Null };
+    let Some(days) = plan.get("days").and_then(|d| d.as_array()) else { return Value::Null };
+    let want = day.max(1) as u64;
+    let row = days
+        .iter()
+        .find(|r| r.get(0).and_then(|v| v.as_u64()) == Some(want))
+        .or_else(|| days.last());
+    let Some(row) = row else { return Value::Null };
+    let past_end = days.last().and_then(|r| r.get(0)).and_then(|v| v.as_u64()).map(|last| want > last).unwrap_or(false);
+    json!({
+        "day": row.get(0),
+        "planned_weight_g": row.get(1),
+        "planned_feed_kg": row.get(2),
+        "meals": row.get(3),
+        "product_code": row.get(4),
+        "strategy": plan.get("strategy"),
+        "past_end": past_end,
+        "curve": days.iter().step_by(7).map(|r| json!([r.get(0), r.get(1)])).collect::<Vec<_>>(),
+    })
 }

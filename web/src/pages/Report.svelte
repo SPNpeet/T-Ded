@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { brand } from '../lib/brand'
   import { onMount } from 'svelte'
   import { cachedGet } from '../lib/api'
   import { toast } from '../lib/ui.svelte'
@@ -16,7 +17,7 @@
     }
   })
   async function share() {
-    const text = `${s.crop.farm_name} · ${s.crop.pond_name} (${s.species.name_th})\nวันที่ ${s.day} ของรุ่น · น้ำหนักเฉลี่ย ${n(s.avg_weight_g)} ก.\nอัตรารอด ${pct(s.performance.survival_pct, 1)} · FCR ${s.performance.fcr ?? '-'}\nคะแนนสุขภาพบ่อ ${s.health.score}/100\nบันทึกด้วยแอปทีเด็ดปลาน้ำจืด`
+    const text = `${s.crop.farm_name} · ${s.crop.pond_name} (${s.species.name_th})\nวันที่ ${s.day} ของรุ่น · น้ำหนักเฉลี่ย ${n(s.avg_weight_g)} ก.\nอัตรารอด ${pct(s.performance.survival_pct, 1)} · FCR ${s.performance.fcr ?? '-'}\nคะแนนสุขภาพบ่อ ${s.health.score}/100\nบันทึกด้วยแอป${brand.appName}`
     if (navigator.share) {
       try {
         await navigator.share({ title: 'สรุปบ่อ', text })
@@ -32,7 +33,7 @@
 <main class="page">
   {#if s}
     <div class="hero" style="padding:24px">
-      <div class="row" style="justify-content:space-between"><div class="brand" style="font-weight:800">ทีเด็ดปลาน้ำจืด</div><span class="small muted">{thDate(s.date)}</span></div>
+      <div class="row" style="justify-content:space-between"><div class="brand" style="font-weight:800">{brand.appName}</div><span class="small muted">{thDate(s.date)}</span></div>
       <h1 class="mt">{s.crop.farm_name}</h1>
       <div class="muted">{s.crop.pond_name} · {s.species.name_th} · วันที่ {s.day} ของรุ่น</div>
       <div class="row mt2" style="gap:18px;align-items:center">

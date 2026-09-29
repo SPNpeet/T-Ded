@@ -6,6 +6,12 @@
       "runtimeExecutable": "./target/release/teedet-server.exe",
       "runtimeArgs": [],
       "port": 8787
+    },
+    {
+      "name": "nb-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--prefix", "web", "vite", "preview", "--config", "web/vite.config.ts", "--mode", "nb", "--outDir", "web/dist-nb", "--port", "4174", "--strictPort"],
+      "port": 4174
     }
   ]
 }

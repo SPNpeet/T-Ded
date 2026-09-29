@@ -25,16 +25,21 @@
   import ServerSetup from './pages/ServerSetup.svelte'
   import Plan from './pages/Plan.svelte'
   import Legal from './pages/Legal.svelte'
+  import Planner from './pages/Planner.svelte'
+  import PondInfo from './pages/PondInfo.svelte'
+  import PondEdit from './pages/PondEdit.svelte'
+  import { flushPhotos } from './lib/photos'
+  import { brand } from './lib/brand'
 
   onMount(() => {
-    loadSession()
+    loadSession().then(() => flushPhotos())
   })
 
   const parts = $derived(ui.route.split('?')[0].split('/').filter(Boolean))
   const seg = (i: number) => parts[i] ?? ''
-  const isPublic = $derived(['calc', 'simulate', 'login', 'register', 'feed', 'server', 'privacy', 'terms'].includes(seg(0)))
+  const isPublic = $derived(['calc', 'simulate', 'login', 'register', 'feed', 'server', 'privacy', 'terms', 'planner'].includes(seg(0)) || (brand.plannerFirst && parts.length === 0))
   const showNav = $derived(!!session.user && !['login', 'register'].includes(seg(0)))
-  const navActive = (k: string) => (k === '/' ? parts.length === 0 || seg(0) === 'pond' : seg(0) === k.slice(1))
+  const navActive = (k: string) => (k === '/' ? parts.length === 0 || seg(0) === 'pond' : k === '/ponds' ? ['ponds', 'pond-info', 'pond-edit', 'new-crop'].includes(seg(0)) : seg(0) === k.slice(1))
 </script>
 
 {#if !ui.online}
@@ -76,12 +81,18 @@
   <Settings />
 {:else if seg(0) === 'ponds'}
   <Ponds />
+{:else if seg(0) === 'pond-info'}
+  <PondInfo pondId={seg(1)} />
+{:else if seg(0) === 'pond-edit'}
+  <PondEdit pondId={seg(1) || 'new'} />
 {:else if seg(0) === 'new-crop'}
   <NewCrop pondId={seg(1)} />
 {:else if seg(0) === 'admin'}
   <Admin sub={seg(1) || 'farms'} id={seg(2)} />
 {:else if seg(0) === 'report'}
   <Report cropId={seg(1)} />
+{:else if seg(0) === 'planner' || (brand.plannerFirst && parts.length === 0 && !session.user)}
+  <Planner />
 {:else if seg(0) === 'privacy'}
   <Legal kind="privacy" />
 {:else if seg(0) === 'terms'}

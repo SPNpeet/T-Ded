@@ -573,7 +573,10 @@
   "price_ref": null,
   "source_url": "https://nbdcthailand.com/ผลิตภัณฑ์อาหารสัตว์น้ำ/",
   "verified": 1,
-  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC"
+  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC",
+  "sack_label_th": "GF 111S",
+  "color_th": null,
+  "brand_group": "nbdc"
  },
  {
   "brand": "การ์เซียสฟิช (Garcias Fish)",
@@ -591,7 +594,10 @@
   "price_ref": null,
   "source_url": "https://nbdcthailand.com/ผลิตภัณฑ์อาหารสัตว์น้ำ/",
   "verified": 1,
-  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC"
+  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC",
+  "sack_label_th": "GF 111M",
+  "color_th": null,
+  "brand_group": "nbdc"
  },
  {
   "brand": "การ์เซียสฟิช (Garcias Fish)",
@@ -609,25 +615,31 @@
   "price_ref": null,
   "source_url": "https://nbdcthailand.com/ผลิตภัณฑ์อาหารสัตว์น้ำ/",
   "verified": 1,
-  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC"
+  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC",
+  "sack_label_th": "GF 112 (M)",
+  "color_th": null,
+  "brand_group": "nbdc"
  },
  {
   "brand": "การ์เซียสฟิช (Garcias Fish)",
   "product_code": "GF 113SML",
-  "name_th": "GF 113 SML ปลาดุกใหญ่ (อายุ 90 วันขึ้นไป)",
+  "name_th": "GF 113 SML อาหารปลาดุก อายุ 90 วันขึ้นไป โปรตีน 25.5%",
   "target": "catfish",
   "stage_th": "ปลาดุกใหญ่",
-  "weight_from_g": 150,
+  "weight_from_g": 60,
   "weight_to_g": 100000,
   "protein_pct": 25.5,
   "fat_pct": null,
-  "pellet_mm": 4,
+  "pellet_mm": 3.0,
   "form": "floating",
   "bag_kg": 20,
   "price_ref": null,
   "source_url": "https://nbdcthailand.com/ผลิตภัณฑ์อาหารสัตว์น้ำ/",
   "verified": 1,
-  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC"
+  "note": "เว็บผู้ผลิตระบุ \"อาหารปลาดุกเล็ก อายุ 90 วันขึ้นไป 25.5% โปรตีน เม็ดเล็ก/เม็ดกลาง\" มีหลายขนาดเม็ด (S/M/L) ใช้ 3 มม. เป็นค่ากลาง",
+  "sack_label_th": "GF 113 SML",
+  "color_th": null,
+  "brand_group": "nbdc"
  },
  {
   "brand": "การ์เซียสฟิช (Garcias Fish)",
@@ -645,102 +657,120 @@
   "price_ref": null,
   "source_url": "https://nbdcthailand.com/ผลิตภัณฑ์อาหารสัตว์น้ำ/",
   "verified": 1,
-  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC"
+  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC",
+  "sack_label_th": "GF 411 SM",
+  "color_th": null,
+  "brand_group": "nbdc"
  },
  {
   "brand": "เอ็นบีฟิช (NB Fish)",
   "product_code": "NB PP 777",
-  "name_th": "NB PP 777 ปลากินเนื้อ โปรตีนสูง",
-  "target": "carnivore",
-  "stage_th": "ปลากินเนื้อเล็ก",
-  "weight_from_g": 0,
-  "weight_to_g": 100,
+  "name_th": "NB Pro Plus 777 โปรตีน 40% เม็ดเล็ก",
+  "target": "all",
+  "stage_th": "เม็ดเล็ก โปรตีนสูง",
+  "weight_from_g": 5,
+  "weight_to_g": 75,
   "protein_pct": 40,
   "fat_pct": null,
-  "pellet_mm": 2,
+  "pellet_mm": 2.0,
   "form": "floating",
   "bag_kg": 20,
   "price_ref": null,
   "source_url": "https://nbdcthailand.com/ผลิตภัณฑ์อาหารสัตว์น้ำ/",
   "verified": 1,
-  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC"
+  "note": "โปรตีน 40% ตามเว็บผู้ผลิต · สีกระสอบเหลืองจากประชุมลูกค้า 28 ก.ย. 2569 (ยังต้องยืนยันว่าเป็นเบอร์นี้) · ขนาดเม็ดเป็นค่าประมาณ",
+  "color_th": "เหลือง",
+  "sack_label_th": "PRO PLUS 777",
+  "brand_group": "nbdc"
  },
  {
   "brand": "เอ็นบีฟิช (NB Fish)",
   "product_code": "NB PP 888M",
-  "name_th": "NB PP 888M ปลากินเนื้อ เม็ดกลาง",
-  "target": "carnivore",
-  "stage_th": "ปลากินเนื้อกลาง",
-  "weight_from_g": 100,
-  "weight_to_g": 400,
+  "name_th": "NB Pro Plus 888M โปรตีน 40% เม็ดกลาง",
+  "target": "all",
+  "stage_th": "เม็ดกลาง โปรตีนสูง",
+  "weight_from_g": 75,
+  "weight_to_g": 300,
   "protein_pct": 40,
   "fat_pct": null,
-  "pellet_mm": 3,
+  "pellet_mm": 3.0,
   "form": "floating",
   "bag_kg": 20,
   "price_ref": null,
   "source_url": "https://nbdcthailand.com/ผลิตภัณฑ์อาหารสัตว์น้ำ/",
   "verified": 1,
-  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC"
+  "note": "โปรตีน 40% เม็ดกลาง กระสอบสีน้ำเงิน ยืนยันจากประชุมลูกค้า 28 ก.ย. 2569 และเว็บผู้ผลิต",
+  "color_th": "น้ำเงิน",
+  "sack_label_th": "PRO PLUS 888M",
+  "brand_group": "nbdc"
  },
  {
   "brand": "เอ็นบีฟิช (NB Fish)",
   "product_code": "NB PP 888",
-  "name_th": "NB PP 888 ปลากินเนื้อ",
-  "target": "carnivore",
-  "stage_th": "ปลากินเนื้อใหญ่",
-  "weight_from_g": 400,
+  "name_th": "NB Pro Plus 888 โปรตีน 40% เม็ดใหญ่",
+  "target": "all",
+  "stage_th": "เม็ดใหญ่ โปรตีนสูง",
+  "weight_from_g": 300,
   "weight_to_g": 100000,
   "protein_pct": 40,
   "fat_pct": null,
-  "pellet_mm": 4,
+  "pellet_mm": 4.0,
   "form": "floating",
   "bag_kg": 20,
   "price_ref": null,
   "source_url": "https://nbdcthailand.com/ผลิตภัณฑ์อาหารสัตว์น้ำ/",
   "verified": 1,
-  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC"
+  "note": "โปรตีน 40% เม็ดใหญ่ กระสอบสีส้ม ยืนยันจากประชุมลูกค้า 28 ก.ย. 2569 และเว็บผู้ผลิต",
+  "color_th": "ส้ม",
+  "sack_label_th": "PRO PLUS 888",
+  "brand_group": "nbdc"
  },
  {
   "brand": "เอ็นบีฟิช (NB Fish)",
   "product_code": "NB 103M",
-  "name_th": "NB FISH 103M ปลาดุก เม็ดกลาง",
+  "name_th": "NB 103M อาหารปลาดุก โปรตีน 25.5% เม็ดกลาง",
   "target": "catfish",
   "stage_th": "ปลาดุกกลาง",
-  "weight_from_g": 60,
-  "weight_to_g": 150,
+  "weight_from_g": 75,
+  "weight_to_g": 300,
   "protein_pct": 25.5,
   "fat_pct": null,
-  "pellet_mm": 3,
+  "pellet_mm": 3.0,
   "form": "floating",
   "bag_kg": 20,
   "price_ref": null,
   "source_url": "https://nbdcthailand.com/ผลิตภัณฑ์อาหารสัตว์น้ำ/",
   "verified": 1,
-  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC"
+  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC",
+  "sack_label_th": "NB FISH 103M",
+  "color_th": null,
+  "brand_group": "nbdc"
  },
  {
   "brand": "เอ็นบีฟิช (NB Fish)",
   "product_code": "NB 103L",
-  "name_th": "NB FISH 103L ปลาดุก เม็ดใหญ่",
+  "name_th": "NB 103L อาหารปลาดุก โปรตีน 25.5% เม็ดใหญ่",
   "target": "catfish",
   "stage_th": "ปลาดุกใหญ่",
-  "weight_from_g": 150,
+  "weight_from_g": 300,
   "weight_to_g": 100000,
   "protein_pct": 25.5,
   "fat_pct": null,
-  "pellet_mm": 4,
+  "pellet_mm": 4.0,
   "form": "floating",
   "bag_kg": 20,
   "price_ref": null,
   "source_url": "https://nbdcthailand.com/ผลิตภัณฑ์อาหารสัตว์น้ำ/",
   "verified": 1,
-  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC"
+  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC",
+  "sack_label_th": "NB FISH 103L",
+  "color_th": null,
+  "brand_group": "nbdc"
  },
  {
   "brand": "เอ็นบีฟิช (NB Fish)",
   "product_code": "NB 202",
-  "name_th": "NB 202 ปลากินพืชใหญ่",
+  "name_th": "NB 202 อาหารปลากินพืช โปรตีน 15.5%",
   "target": "herbivore",
   "stage_th": "ปลากินพืชใหญ่",
   "weight_from_g": 300,
@@ -753,7 +783,10 @@
   "price_ref": null,
   "source_url": "https://nbdcthailand.com/ผลิตภัณฑ์อาหารสัตว์น้ำ/",
   "verified": 1,
-  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC"
+  "note": "กระสอบเขียนว่า \"NB อาหารปลากินพืช\" (ประชุมลูกค้า 28 ก.ย. 2569) โปรตีน 15.5% ตามเว็บผู้ผลิต · ขนาดเม็ดยังไม่ระบุ ใช้ค่าประมาณ",
+  "sack_label_th": "NB อาหารปลากินพืช",
+  "color_th": null,
+  "brand_group": "nbdc"
  },
  {
   "brand": "กัสโซ่ฟีด (Gazzo Feed)",
@@ -770,8 +803,11 @@
   "bag_kg": 20,
   "price_ref": null,
   "source_url": "https://nbdcthailand.com/ผลิตภัณฑ์อาหารสัตว์น้ำ/",
-  "verified": 1,
-  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC"
+  "verified": 0,
+  "note": "เว็บผู้ผลิตเขียนขัดกันเอง: หัวข้อ 30% แต่คำอธิบาย \"อาหารปลาดุก อายุ 30-45 วัน 32% โปรตีน เม็ดเล็ก/กลาง\" ใช้ 30% (ค่าต่ำกว่า) จนกว่าลูกค้ายืนยัน",
+  "sack_label_th": "GZ 102 M",
+  "color_th": null,
+  "brand_group": "nbdc"
  },
  {
   "brand": "กัสโซ่ฟีด (Gazzo Feed)",
@@ -789,7 +825,10 @@
   "price_ref": null,
   "source_url": "https://nbdcthailand.com/ผลิตภัณฑ์อาหารสัตว์น้ำ/",
   "verified": 1,
-  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC"
+  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC",
+  "sack_label_th": "GZ 401 M",
+  "color_th": null,
+  "brand_group": "nbdc"
  },
  {
   "brand": "กัสโซ่ฟีด (Gazzo Feed)",
@@ -807,7 +846,10 @@
   "price_ref": null,
   "source_url": "https://nbdcthailand.com/ผลิตภัณฑ์อาหารสัตว์น้ำ/",
   "verified": 1,
-  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC"
+  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC",
+  "sack_label_th": "GZ 103 SML",
+  "color_th": null,
+  "brand_group": "nbdc"
  },
  {
   "brand": "กัสโซ่ฟีด (Gazzo Feed)",
@@ -825,6 +867,9 @@
   "price_ref": null,
   "source_url": "https://nbdcthailand.com/ผลิตภัณฑ์อาหารสัตว์น้ำ/",
   "verified": 1,
-  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC"
+  "note": "ข้อมูลจากหน้าเว็บผู้ผลิต NBDC",
+  "sack_label_th": "GZ 202 L",
+  "color_th": null,
+  "brand_group": "nbdc"
  }
 ]

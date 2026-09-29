@@ -2,6 +2,7 @@ import { mount } from 'svelte'
 import './app.css'
 import App from './App.svelte'
 import { applyDisplayPrefs } from './lib/prefs'
+import { applyBrandTheme } from './lib/brand'
 
 applyDisplayPrefs()
 
@@ -14,6 +15,8 @@ if ('serviceWorker' in navigator) {
     location.reload()
   })
 }
+
+applyBrandTheme()
 
 const app = mount(App, {
   target: document.getElementById('app')!,

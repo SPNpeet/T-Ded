@@ -8,6 +8,8 @@
 
   let { sub = 'farms', id = '' }: { sub?: string; id?: string } = $props()
   let farms: any[] = $state([])
+  let demand: any = $state(null)
+  let demandDays = $state(30)
   let detail: any[] = $state([])
   let rules: any = $state(null)
   let species: any[] = $state([])
@@ -103,6 +105,7 @@
   async function load() {
     try {
       if (sub === 'farms') farms = await api.get('/admin/farms')
+      if (sub === 'demand') demand = await api.get(`/admin/feed-demand?days=${demandDays}`)
       if (sub === 'farm' && id) detail = await api.get(`/admin/farms/${id}`)
       if (sub === 'rules') {
         rules = await api.get('/admin/rules')
@@ -127,8 +130,25 @@
     id
     load()
   })
+  function demandCsv() {
+    if (!demand) return
+    const head = ['ฟาร์ม', 'จังหวัด', 'บ่อ', 'ละติจูด', 'ลองจิจูด', 'ชนิดปลา', 'วันที่เลี้ยง', 'ปลาเหลือ (ตัว)', 'น้ำหนักเฉลี่ย (ก.)', 'น้ำหนักปลาในบ่อ (กก.)', 'อาหาร/วัน (กก.)', 'เบอร์ที่ใช้', `ต้องใช้ ${demand.horizon_days} วัน (กก.)`, `ต้องใช้ ${demand.horizon_days} วัน (กระสอบ)`, 'สต๊อกพออีก (วัน)', 'ต้องสั่งเพิ่ม']
+    const esc = (v: any) => {
+      const t = v == null ? '' : String(v)
+      return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t
+    }
+    const lines = demand.rows.map((r: any) => [r.farm_name, r.province, r.pond_name, r.pond_lat, r.pond_lng, r.species_th, r.day, r.alive_count, r.avg_weight_g, r.biomass_kg, r.feed_kg_day, r.product, r.next_kg, r.next_bags, r.stock_days_left, r.reorder ? 'ใช่' : ''].map(esc).join(','))
+    // BOM ให้ Excel อ่านภาษาไทยถูก
+    const blob = new Blob(['﻿' + [head.join(','), ...lines].join('\n')], { type: 'text/csv;charset=utf-8' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `feed-demand-${demand.date}.csv`
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000)
+  }
   const tabs = [
     ['farms', 'ฟาร์ม'],
+    ['demand', 'ความต้องการอาหาร'],
     ['rules', 'กติกาปรับ'],
     ['species', 'ตารางปลา'],
     ['products', 'ยี่ห้ออาหาร'],
@@ -244,6 +264,54 @@
       {/each}
     {/if}
 
+    {#if sub === 'demand'}
+      {#if !demand}
+        <div class="skeleton mt"></div>
+      {:else}
+        <div class="row mt" style="gap:8px;flex-wrap:wrap">
+          <span class="small bold">มองไปข้างหน้า</span>
+          {#each [14, 30, 60] as d}<button class="chip" class:on={demandDays === d} onclick={() => { demandDays = d; demand = null; load() }}>{d} วัน</button>{/each}
+          <button class="btn ghost sm" onclick={demandCsv}>ส่งออก CSV</button>
+        </div>
+        <div class="kpi mt">
+          <div class="k"><div class="lbl">ฟาร์ม / บ่อที่เลี้ยง</div><div class="val">{demand.totals.farms} / {demand.totals.ponds}</div></div>
+          <div class="k"><div class="lbl">ปลาเหลือในบ่อ</div><div class="val">{n(demand.totals.alive_count)} ตัว</div></div>
+          <div class="k"><div class="lbl">น้ำหนักปลารวม</div><div class="val">{n(demand.totals.biomass_kg)} กก.</div></div>
+        </div>
+        <div class="kpi mt">
+          <div class="k"><div class="lbl">อาหารที่ใช้/วัน</div><div class="val">{n(demand.totals.feed_kg_day)} กก.</div></div>
+          <div class="k"><div class="lbl">ต้องใช้ {demand.horizon_days} วันข้างหน้า</div><div class="val">{n(demand.totals.next_bags)} กระสอบ</div></div>
+          <div class="k"><div class="lbl">บ่อที่อาหารใกล้หมด</div><div class="val" style="color:var(--amber)">{demand.totals.reorder_ponds}</div></div>
+        </div>
+        <div class="card mt">
+          <h3>แยกตามเบอร์อาหาร ({demand.horizon_days} วันข้างหน้า)</h3>
+          {#each demand.by_product as p}<div class="list-item"><div class="main"><div class="title">{p.product}</div></div><b class="num">{n(p.bags)} กระสอบ</b><span class="small muted" style="margin-left:8px">{n(p.kg)} กก.</span></div>{/each}
+          {#if !demand.by_product.length}<p class="muted">ยังไม่มีบ่อที่เลี้ยงอยู่</p>{/if}
+          <p class="tiny muted mt">บ่อที่ผูกโปรแกรมการเลี้ยงไว้ คิดตามเบอร์และปริมาณในโปรแกรม บ่ออื่นคิดจากปริมาณที่แนะนำวันนี้ × จำนวนวัน</p>
+        </div>
+        <div class="table-wrap mt">
+          <table>
+            <thead><tr><th>ฟาร์ม / บ่อ</th><th>ปลา</th><th class="num">เหลือ (ตัว)</th><th class="num">น้ำหนัก (ก.)</th><th class="num">อาหาร/วัน</th><th>เบอร์</th><th class="num">{demand.horizon_days} วัน (กระสอบ)</th><th class="num">สต๊อกพอ</th></tr></thead>
+            <tbody>
+              {#each demand.rows as r}
+                <tr>
+                  <td><a href="#/admin/farm/{r.farm_id}">{r.farm_name}</a> · {r.pond_name}{#if r.pond_lat != null} <a class="tiny" href="https://www.google.com/maps/search/?api=1&query={r.pond_lat},{r.pond_lng}" target="_blank" rel="noopener">แผนที่</a>{/if}</td>
+                  <td>{r.species_th} <span class="tiny muted">วันที่ {r.day}</span></td>
+                  <td class="num">{n(r.alive_count)}</td>
+                  <td class="num">{n(r.avg_weight_g)}</td>
+                  <td class="num">{n2(r.feed_kg_day)}</td>
+                  <td>{r.product ?? '-'}{r.has_plan ? '' : ' *'}</td>
+                  <td class="num">{n(r.next_bags, 1)}</td>
+                  <td class="num" style="color:{r.reorder ? 'var(--amber)' : 'inherit'}">{r.stock_days_left != null ? `${n(r.stock_days_left)} วัน` : 'ไม่ได้บันทึก'}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+        <p class="tiny muted mt">* ไม่ได้ผูกโปรแกรม ใช้เบอร์ล่าสุดที่ฟาร์มรับเข้าสต๊อก</p>
+      {/if}
+    {/if}
+
     {#if sub === 'farm'}
       {#if !detail.length}<div class="card mt center muted">ฟาร์มนี้ยังไม่มีบ่อที่เลี้ยงอยู่</div>{/if}
       {#each detail as s}
@@ -258,7 +326,7 @@
             </div>
           </div>
           {#each s.alerts as a}<div class="alert {a.level === 'warn' ? 'warn' : 'info'} small mt">{a.text}</div>{/each}
-          <a class="btn ghost sm mt" href="#/pond/{s.crop.id}">เปิดบ่อในมุมมองเกษตรกร</a>
+          <div class="grid2 mt"><a class="btn ghost sm" href="#/pond/{s.crop.id}">เปิดบ่อในมุมมองเกษตรกร</a><a class="btn ghost sm" href="#/pond-info/{s.crop.pond_id}?farm={s.crop.farm_id}">ข้อมูลบ่อ รูป และตำแหน่ง</a></div>
         </div>
       {/each}
     {/if}

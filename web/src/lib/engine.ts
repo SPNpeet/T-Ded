@@ -47,3 +47,25 @@ export async function healthLocal(input: any, species: any) {
   const e = await engine()
   return e.pond_health({ water: {}, mortality_7d_pct: null, feeding_response: null, growth_status: null, days_since_last_log: null, previous_score: null, ...input }, species)
 }
+
+/** วางโปรแกรมการเลี้ยงตามเป้าหมาย (คำนวณในเครื่องด้วย engine ตัวเดียวกับเซิร์ฟเวอร์) */
+export async function planLocal(req: {
+  species: any
+  stock_weight_g: number
+  count: number
+  survival_pct?: number
+  target_weight_g?: number | null
+  target_days?: number | null
+  products: any[]
+  custom_codes?: string[]
+  farm_growth_scale?: number | null
+}) {
+  const e = await engine()
+  return e.feed_plan({ survival_pct: 85, target_weight_g: null, target_days: null, custom_codes: [], response: null, farm_growth_scale: null, max_days: null, ...req })
+}
+
+/** อาหารโปรตีนเท่านี้เหมาะกับปลาขนาดนี้ไหม */
+export async function proteinFitLocal(speciesCode: string, weightG: number, proteinPct: number) {
+  const e = await engine()
+  return e.protein_fit(speciesCode, weightG, proteinPct)
+}

@@ -204,3 +204,98 @@ async fn audit_admin(st: &AppState, user: &AuthUser, action: &str, entity: &str,
         .execute(&st.db)
         .await;
 }
+
+/// ความต้องการอาหารของทุกบ่อในองค์กร (หลังบ้านบริษัทอาหาร): ฟาร์มไหนเลี้ยงอะไร ปลาเหลือเท่าไร
+/// ใช้อาหารวันละเท่าไร เบอร์อะไร และ 30 วันข้างหน้าต้องใช้กี่กระสอบ ใช้วางแผนผลิต/ส่งของ
+pub async fn feed_demand(State(st): State<AppState>, user: AuthUser, Query(q): Query<Value>) -> ApiResult<Json<Value>> {
+    staff(&user)?;
+    let horizon: i64 = q.get("days").and_then(|v| v.as_str()).and_then(|s| s.parse().ok()).unwrap_or(30).clamp(7, 120);
+    let crops = sqlx::query(
+        "SELECT c.id, c.plan_json, c.farm_id, p.name AS pond_name, p.lat AS pond_lat, p.lng AS pond_lng, p.area_m2, f.name AS farm_name, f.province, f.bag_kg
+         FROM crops c JOIN ponds p ON p.id = c.pond_id JOIN farms f ON f.id = c.farm_id
+         WHERE f.org_id = ? AND c.status = 'active' ORDER BY f.name, p.sort_order, p.name",
+    )
+    .bind(&user.org_id)
+    .fetch_all(&st.db)
+    .await?;
+    let today = today_bkk();
+    let opts = SnapshotOpts { with_weather: false, with_forecast: false, ..Default::default() };
+    let mut rows = Vec::new();
+    let mut by_product: std::collections::BTreeMap<String, f64> = std::collections::BTreeMap::new();
+    let (mut alive_total, mut biomass_total, mut kg_day_total, mut kg_horizon_total) = (0.0f64, 0.0f64, 0.0f64, 0.0f64);
+    let mut farms = std::collections::BTreeSet::new();
+    for r in crops {
+        let id: String = r.get("id");
+        let snap = crop_snapshot(&st, &id, &today, &user.org_id, &opts).await?;
+        let bag_kg = r.get::<Option<f64>, _>("bag_kg").filter(|b| *b > 0.0).unwrap_or(20.0);
+        let day = snap["day"].as_u64().unwrap_or(0);
+        let kg_day = snap["recommendation"]["final_kg"].as_f64().unwrap_or(0.0);
+        // มีโปรแกรม: ใช้ปริมาณและเบอร์ตามโปรแกรมของวันข้างหน้า / ไม่มี: ใช้ปริมาณวันนี้คูณจำนวนวัน
+        let plan: Option<Value> = r.get::<Option<String>, _>("plan_json").and_then(|s| serde_json::from_str(&s).ok());
+        let mut next: std::collections::BTreeMap<String, f64> = std::collections::BTreeMap::new();
+        let plan_days = plan.as_ref().and_then(|p| p.get("days")).and_then(|d| d.as_array()).cloned().unwrap_or_default();
+        let from = day.max(1);
+        let upcoming: Vec<&Value> = plan_days.iter().filter(|d| d.get(0).and_then(|x| x.as_u64()).map_or(false, |x| x >= from && x < from + horizon as u64)).collect();
+        let current_product = snap["plan_today"]["product_code"].as_str().map(String::from).or_else(|| snap["feed_on_hand"]["brand"].as_str().map(String::from));
+        if !upcoming.is_empty() {
+            for d in upcoming {
+                let code = d.get(4).and_then(|x| x.as_str()).unwrap_or("-").to_string();
+                *next.entry(code).or_default() += d.get(2).and_then(|x| x.as_f64()).unwrap_or(0.0);
+            }
+        } else {
+            next.insert(current_product.clone().unwrap_or_else(|| "ไม่ระบุเบอร์".into()), kg_day * horizon as f64);
+        }
+        let next_kg: f64 = next.values().sum();
+        for (k, v) in &next {
+            *by_product.entry(k.clone()).or_default() += v;
+        }
+        let alive = snap["alive_count"].as_f64().unwrap_or(0.0);
+        let biomass = snap["performance"]["biomass_kg"].as_f64().unwrap_or(0.0);
+        alive_total += alive;
+        biomass_total += biomass;
+        kg_day_total += kg_day;
+        kg_horizon_total += next_kg;
+        farms.insert(r.get::<String, _>("farm_id"));
+        let days_left = snap["stock"]["days_left"].as_f64();
+        rows.push(json!({
+            "crop_id": id,
+            "farm_id": r.get::<String, _>("farm_id"),
+            "farm_name": r.get::<String, _>("farm_name"),
+            "province": r.get::<Option<String>, _>("province"),
+            "pond_name": r.get::<String, _>("pond_name"),
+            "pond_lat": r.get::<Option<f64>, _>("pond_lat"),
+            "pond_lng": r.get::<Option<f64>, _>("pond_lng"),
+            "area_m2": r.get::<Option<f64>, _>("area_m2"),
+            "species_th": snap["species"]["name_th"],
+            "day": day,
+            "alive_count": alive,
+            "avg_weight_g": snap["avg_weight_g"],
+            "biomass_kg": biomass,
+            "feed_kg_day": kg_day,
+            "product": current_product,
+            "has_plan": plan.is_some(),
+            "next_kg": (next_kg * 10.0).round() / 10.0,
+            "next_bags": (next_kg / bag_kg * 10.0).round() / 10.0,
+            "next_by_product": next.iter().map(|(k, v)| json!({ "product": k, "kg": (v * 10.0).round() / 10.0, "bags": (v / bag_kg).ceil() })).collect::<Vec<_>>(),
+            "stock_days_left": days_left,
+            "reorder": days_left.map(|d| d <= 7.0).unwrap_or(false),
+            "health_score": snap["health"]["score"],
+        }));
+    }
+    Ok(Json(json!({
+        "date": today,
+        "horizon_days": horizon,
+        "totals": {
+            "farms": farms.len(),
+            "ponds": rows.len(),
+            "alive_count": alive_total.round(),
+            "biomass_kg": biomass_total.round(),
+            "feed_kg_day": (kg_day_total * 10.0).round() / 10.0,
+            "next_kg": kg_horizon_total.round(),
+            "next_bags": (kg_horizon_total / 20.0).ceil(),
+            "reorder_ponds": rows.iter().filter(|r| r["reorder"].as_bool().unwrap_or(false)).count(),
+        },
+        "by_product": by_product.iter().map(|(k, v)| json!({ "product": k, "kg": v.round(), "bags": (v / 20.0).ceil() })).collect::<Vec<_>>(),
+        "rows": rows,
+    })))
+}

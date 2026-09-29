@@ -105,8 +105,10 @@
     }
     const d0 = dAt(s.crop.stock_weight_g)
     for (let d = 0; d <= maxDay; d += 7) std.push({ x: d, y: wAt(d0 + d) })
+    const plan = s.plan_today?.curve?.length ? [{ name: 'ตามโปรแกรม', color: '#d0850e', points: s.plan_today.curve.map(([x, y]: [number, number]) => ({ x, y })), dashed: true }] : []
     return [
       { name: 'มาตรฐาน', color: '#9aa7b8', points: std, dashed: true },
+      ...plan,
       { name: 'ปลาของคุณ', color: '#0e8ea7', points: actual },
     ]
   })
@@ -127,7 +129,11 @@
   })
 </script>
 
-<TopBar title={s ? `${s.crop.pond_name} · ${s.species.name_th}` : 'บ่อ'} sub={s ? `รุ่นวันที่ ${s.day} · ปล่อย ${thDate(s.crop.stocked_at)}` : ''} back="/" />
+<TopBar title={s ? `${s.crop.pond_name} · ${s.species.name_th}` : 'บ่อ'} sub={s ? `รุ่นวันที่ ${s.day} · ปล่อย ${thDate(s.crop.stocked_at)}` : ''} back="/">
+  {#snippet right()}
+    {#if s}<a class="btn link" href="#/pond-info/{s.crop.pond_id}" aria-label="ข้อมูลบ่อและรูปถ่าย"><Icon name="camera" size={22} /></a>{/if}
+  {/snippet}
+</TopBar>
 
 <main class="page">
   {#if err && !s}
@@ -157,6 +163,23 @@
           {#if rec.factor !== 1}<span class="pill neutral">ฐาน {n2(rec.base_kg)} กก. × {rec.factor}</span>{/if}
         </div>
       </section>
+      {#if s.plan_today}
+        {@const pt = s.plan_today}
+        {@const diff = pt.planned_weight_g ? ((s.avg_weight_g - pt.planned_weight_g) / pt.planned_weight_g) * 100 : null}
+        <div class="card mt tint-cyan">
+          <div class="card-title"><h3>ตามโปรแกรมการเลี้ยง วันที่ {pt.day}</h3></div>
+          {#if pt.past_end}
+            <div class="small">เลยวันสุดท้ายของโปรแกรมแล้ว ปลาควรถึงเป้าหมาย ถ้ายังไม่ถึงให้ชั่งแล้ววางโปรแกรมต่อ</div>
+          {:else}
+            <div class="small">ให้ <b>{n2(pt.planned_feed_kg)} กก.</b> แบ่ง {pt.meals} มื้อ ด้วย <b>{pt.product_code}</b> · ปลาควรหนักประมาณ {n(pt.planned_weight_g)} ก.</div>
+            {#if pt.meals && pt.meals !== rec.meals_per_day}<div class="small mt">ปลาขนาดนี้โปรแกรมแนะนำ {pt.meals} มื้อ แต่ฟาร์มตั้งไว้ {rec.meals_per_day} มื้อ ปริมาณต่อวันเท่าเดิม แบ่งมื้อตามที่สะดวก (เปลี่ยนได้ที่ <a href="#/settings">ตั้งค่า</a>)</div>{/if}
+            {#if diff != null}
+              <div class="small mt">ตอนนี้ {n(s.avg_weight_g)} ก.{s.avg_weight_source === 'estimated' ? ' (ประมาณ)' : ''} — <b style="color:{diff < -10 ? 'var(--red)' : diff > 5 ? 'var(--green)' : 'var(--navy)'}">{Math.abs(diff) < 3 ? 'ตรงตามโปรแกรม' : diff < 0 ? `ช้ากว่าโปรแกรม ${n(-diff)}%` : `เร็วกว่าโปรแกรม ${n(diff)}%`}</b></div>
+            {/if}
+            <div class="tiny muted mt">ปริมาณด้านบนคิดจากน้ำหนักจริงและอากาศวันนี้ ให้ยึดตัวเลขด้านบนเป็นหลัก ตัวเลขโปรแกรมใช้เทียบว่าเดินตามแผนไหม</div>
+          {/if}
+        </div>
+      {/if}
       {#if s.today_log?.fed_kg != null}
         <div class="alert good mt"><Icon name="check" />วันนี้บันทึกให้แล้ว {n2(s.today_log.fed_kg)} กก.{s.today_log.mortality ? ` · ตาย ${s.today_log.mortality} ตัว` : ''}</div>
       {/if}

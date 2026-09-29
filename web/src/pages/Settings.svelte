@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { brand } from '../lib/brand'
   import { onMount } from 'svelte'
   import { isLocalMode, exportJson, importJson } from '../lib/local'
+  import { exportPhotos, importPhotos } from '../lib/photos'
   import { api, readQueue, dropQueued, flushQueue } from '../lib/api'
   import { session, currentFarm, toast, loadSession, ui, go } from '../lib/ui.svelte'
   import { PROVINCES, thDateTime } from '../lib/format'
@@ -49,8 +51,11 @@
   }
   let myName = (session.user?.name ?? '')
   let orgName = (session.user?.org_name ?? '')
-  function exportLocal() {
-    const blob = new Blob([exportJson()], { type: 'application/json' })
+  async function exportLocal() {
+    // รูปบ่อรวมอยู่ในไฟล์เดียวกัน ย้ายเครื่องแล้วรูปและพิกัดไม่หาย
+    const photos = await exportPhotos()
+    const text = photos.length ? JSON.stringify({ ...JSON.parse(exportJson()), photos }) : exportJson()
+    const blob = new Blob([text], { type: 'application/json' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
     a.download = 'teedet-backup-' + new Date().toISOString().slice(0, 10) + '.json'
@@ -65,7 +70,7 @@
     const fr = new FileReader()
     fr.onload = async () => {
       try {
-        importJson(String(fr.result))
+        await importPhotos(importJson(String(fr.result)))
         await loadSession()
         toast('นำเข้าข้อมูลเรียบร้อย', 'success')
         go('/')
@@ -164,7 +169,7 @@
       <button class="btn ghost mt" onclick={unlinkLine}>ยกเลิกการเชื่อม</button>
     {:else if lineCode}
       {#if !lineCode.bot_configured}<div class="alert warn mt">ระบบยังไม่ได้ตั้งค่า LINE OA (ผู้ดูแลต้องใส่ token ที่ server) รหัสด้านล่างจะใช้ได้เมื่อตั้งค่าแล้ว</div>{/if}
-      <div class="card tint-cyan mt center"><div class="small">1. เพิ่มเพื่อน LINE OA ของทีเด็ดปลาน้ำจืด{#if lineCode.add_friend_url} <a href={lineCode.add_friend_url} target="_blank" rel="noopener">กดที่นี่</a>{/if}</div><div class="small mt">2. พิมพ์ในแชท:</div><div class="big-number" style="font-size:1.6rem">ผูก {lineCode.code}</div></div>
+      <div class="card tint-cyan mt center"><div class="small">1. เพิ่มเพื่อน LINE OA ของ{brand.appName}{#if lineCode.add_friend_url} <a href={lineCode.add_friend_url} target="_blank" rel="noopener">กดที่นี่</a>{/if}</div><div class="small mt">2. พิมพ์ในแชท:</div><div class="big-number" style="font-size:1.6rem">ผูก {lineCode.code}</div></div>
     {:else}
       <button class="btn primary mt" onclick={getLineCode}>ขอรหัสเชื่อม LINE</button>
     {/if}

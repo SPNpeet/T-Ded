@@ -5,6 +5,8 @@
   import { todayISO } from '../lib/format'
   import TopBar from '../lib/TopBar.svelte'
   import { speciesList } from '../lib/engine'
+  import { pendingPlan, clearPendingPlan, fitPlan } from '../lib/plan'
+  import { speciesTh } from '../lib/pond'
 
   let { pondId }: { pondId: string } = $props()
   let species: any[] = $state([])
@@ -16,9 +18,18 @@
   let target = $state('')
   let note = $state('')
   let busy = $state(false)
+  const initial = pendingPlan()
+  let pending = $state(initial)
+  if (initial) {
+    code = initial.code
+    count = String(initial.count)
+    weight = String(initial.stockW)
+    target = String(initial.targetW)
+  }
   onMount(async () => {
     species = await speciesList()
   })
+  const fitted = $derived(pending ? fitPlan(pending, code, parseInt(count) || 0, parseFloat(weight) || 0) : null)
   const sp = $derived(species.find((s) => s.code === code))
   async function save() {
     const miss: string[] = []
@@ -27,7 +38,8 @@
     if (miss.length) return toast('กรอก' + miss.join(' และ ') + 'ก่อนครับ', 'error', 3500)
     busy = true
     try {
-      const r = await api.post(`/ponds/${pondId}/crops`, { species_code: code, stocked_at: stockedAt, stocked_count: parseInt(count), stock_weight_g: parseFloat(weight), fry_price_each: fryPrice ? parseFloat(fryPrice) : 0, target_weight_g: target ? parseFloat(target) : null, note: note || null })
+      const r = await api.post(`/ponds/${pondId}/crops`, { species_code: code, stocked_at: stockedAt, stocked_count: parseInt(count), stock_weight_g: parseFloat(weight), fry_price_each: fryPrice ? parseFloat(fryPrice) : 0, target_weight_g: target ? parseFloat(target) : null, note: note || null, plan: fitted?.plan ?? undefined })
+      if (fitted?.plan) clearPendingPlan()
       toast('เริ่มรุ่นใหม่แล้ว ระบบจะคำนวณอาหารให้ทุกวัน', 'success')
       go(`/pond/${r.id}`)
     } catch (e: any) {
@@ -40,6 +52,17 @@
 
 <TopBar title="ปล่อยปลารุ่นใหม่" back="/ponds" />
 <main class="page">
+  {#if pending}
+    <div class="card tint-cyan">
+      <div class="card-title"><h3>ใช้โปรแกรมการเลี้ยงที่วางไว้</h3><button class="btn link" onclick={() => { clearPendingPlan(); pending = null }}>ไม่ใช้</button></div>
+      <div class="small">{speciesTh(pending.code)} {pending.count.toLocaleString('th-TH')} ตัว ปล่อย {pending.stockW} ก. เป้า {pending.targetW.toLocaleString('th-TH')} ก.</div>
+      {#if fitted?.plan}
+        <div class="small mt">หน้าวันนี้จะบอกอาหารตามโปรแกรมทุกวัน และกราฟจะเทียบน้ำหนักจริงกับที่วางไว้{fitted.reason ? ` · ${fitted.reason}` : ''}</div>
+      {:else}
+        <div class="alert warn mt small">{fitted?.reason} จึงใช้โปรแกรมเดิมไม่ได้ <a href="#/planner">วางโปรแกรมใหม่</a></div>
+      {/if}
+    </div>
+  {/if}
   <label for="sp">ชนิดปลา</label>
   <select id="sp" bind:value={code}>{#each species as s}<option value={s.code}>{s.name_th}{s.approximate ? ' (ตารางโดยประมาณ)' : ''}</option>{/each}</select>
   <label>วันที่ปล่อย</label><input type="date" bind:value={stockedAt} max={todayISO()} />

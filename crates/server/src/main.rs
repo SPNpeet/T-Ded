@@ -6,6 +6,7 @@ mod calc;
 mod db;
 mod error;
 mod line;
+mod photos;
 mod products;
 mod security;
 mod settings;
@@ -115,6 +116,8 @@ async fn main() {
         .route("/ponds/{id}", axum::routing::patch(api::update_pond))
         .route("/ponds/{id}/crops", post(api::create_crop))
         .route("/ponds/{id}/water", get(api::list_water).post(api::create_water))
+        .route("/ponds/{id}/photos", get(photos::list).post(photos::create).layer(axum::extract::DefaultBodyLimit::max(6 * 1024 * 1024)))
+        .route("/photos/{id}", get(photos::image).patch(photos::update).delete(photos::remove))
         .route("/crops/{id}", axum::routing::patch(api::update_crop))
         .route("/crops/{id}/close", post(api::close_crop))
         .route("/crops/{id}/today", get(snapshot::crop_today))
@@ -138,6 +141,7 @@ async fn main() {
         .route("/admin/revenue", get(billing::revenue_summary))
         // หลังบ้าน
         .route("/admin/farms", get(admin::farms_overview))
+        .route("/admin/feed-demand", get(admin::feed_demand))
         .route("/admin/farms/{id}", get(admin::farm_detail))
         .route("/admin/rules", get(admin::get_rules).put(admin::put_rules))
         .route("/admin/species", get(admin::get_species))

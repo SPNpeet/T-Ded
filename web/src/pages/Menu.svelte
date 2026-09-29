@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { brand } from '../lib/brand'
+  import BrandMark from '../lib/BrandMark.svelte'
   const BASE = import.meta.env.BASE_URL
   import { session, currentFarm, logout, isStaff, ui } from '../lib/ui.svelte'
   import Icon from '../lib/Icon.svelte'
@@ -7,6 +9,7 @@
   let hc = $state(getHighContrast())
   const items = [
     ['#/calc', 'calc', 'คำนวณอาหาร (แบบเร็ว)'],
+    ['#/planner', 'calendar', 'วางโปรแกรมการเลี้ยงตามเป้าหมาย'],
     ['#/simulate', 'chart', 'จำลองรุ่นเลี้ยงก่อนลงทุน'],
     ['#/feed', 'feed', 'อาหารและโปรตีน / ผสมอาหารเอง'],
     ['#/plan', 'star', 'แพ็กเกจการใช้งาน'],
@@ -20,7 +23,7 @@
   ]
 </script>
 
-<header class="topbar"><div class="brand"><img src="{BASE}mark.png" alt="" />เพิ่มเติม</div></header>
+<header class="topbar"><div class="brand"><BrandMark />เพิ่มเติม</div></header>
 <main class="page">
   <div class="card">
     <div class="row"><div style="flex:1"><b>{session.user?.name}</b><div class="small muted">{session.user?.phone} · {session.user?.role === 'owner' ? 'เจ้าของฟาร์ม' : session.user?.role === 'worker' ? 'คนงาน' : session.user?.role === 'officer' ? 'เจ้าหน้าที่ส่งเสริม' : 'ผู้ดูแลระบบ'}</div><div class="small muted">{currentFarm()?.name ?? ''} · {session.user?.org_name}</div></div></div>
@@ -44,5 +47,5 @@
   </div>
   {#if ui.queue}<div class="alert warn mt">มี {ui.queue} รายการรอส่งเมื่อมีสัญญาณ ดูได้ในหน้าตั้งค่า</div>{/if}
   <button class="btn ghost mt2" onclick={logout}><Icon name="logout" />ออกจากระบบ</button>
-  <p class="center tiny muted mt2">ทีเด็ดปลาน้ำจืด · ด้วยอาหารคุณภาพ และคำปรึกษาจากมืออาชีพ</p>
+  <p class="center tiny muted mt2">{brand.appName} · {brand.tagline}</p>
 </main>

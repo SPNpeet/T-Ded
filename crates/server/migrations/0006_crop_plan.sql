@@ -1,0 +1,1 @@
+ALTER TABLE crops ADD COLUMN plan_json TEXT;

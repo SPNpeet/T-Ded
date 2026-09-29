@@ -129,3 +129,14 @@ pub fn nutrition_tips() -> Result<JsValue, JsValue> {
     let tips: Vec<(String, String)> = nutrition::feed_tips().into_iter().map(|(a, b)| (a.to_string(), b.to_string())).collect();
     to_js(&tips)
 }
+
+#[wasm_bindgen]
+pub fn feed_plan(request: JsValue) -> Result<JsValue, JsValue> {
+    let r: crate::planner::PlanRequest = from_js(request)?;
+    to_js(&crate::planner::plan(&r))
+}
+
+#[wasm_bindgen]
+pub fn protein_fit(species_code: &str, weight_g: f64, protein_pct: f64) -> Result<JsValue, JsValue> {
+    to_js(&crate::protein::fit(&crate::protein::ProteinResponse::default(), species_code, weight_g, protein_pct))
+}

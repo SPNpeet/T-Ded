@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { brand } from '../lib/brand'
+  import BrandMark from '../lib/BrandMark.svelte'
   const BASE = import.meta.env.BASE_URL
   import { onMount } from 'svelte'
   import { cachedGet } from '../lib/api'
@@ -52,7 +54,7 @@
 </script>
 
 <header class="topbar">
-  <div class="brand"><img src="{BASE}mark.png" alt="" />ทีเด็ดปลาน้ำจืด</div>
+  <div class="brand"><BrandMark />{brand.appName}</div>
   <div class="spacer"></div>
   {#if (session.user?.farms?.length ?? 0) > 1}
     <select style="min-height:44px;width:auto;padding:6px 10px;border-radius:10px;font-size:0.9rem" value={session.farmId} onchange={(e) => selectFarm((e.target as HTMLSelectElement).value)}>
@@ -99,7 +101,7 @@
 
     <div class="fab-row mt2">
       <a href="#/stock"><Icon name="stock" />รับอาหารเข้า</a>
-      <a href="#/prices"><Icon name="chart" />ราคาปลา</a>
+      <a href="#/planner"><Icon name="calendar" />วางโปรแกรม</a>
       <a href="#/feed"><Icon name="feed" />อาหาร/โปรตีน</a>
       <a href="#/diseases"><Icon name="map" />โรคในพื้นที่</a>
     </div>

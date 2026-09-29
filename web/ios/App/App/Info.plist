@@ -66,5 +66,11 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>ใช้กล้องถ่ายรูปบ่อ พร้อมประทับวันเวลาและพิกัดลงบนรูป</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>ใช้ตำแหน่งเพื่อปักหมุดบ่อ ใส่พิกัดบนรูปถ่ายบ่อ และดึงสภาพอากาศของฟาร์ม</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>เลือกรูปบ่อที่ถ่ายไว้ในเครื่อง</string>
 </dict>
 </plist>

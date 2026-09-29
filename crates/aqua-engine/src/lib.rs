@@ -18,6 +18,8 @@ pub mod growth;
 pub mod health;
 pub mod nutrition;
 pub mod perf;
+pub mod planner;
+pub mod protein;
 pub mod species;
 pub mod water;
 
@@ -31,6 +33,8 @@ pub use growth::{compare_growth, GrowthCompare};
 pub use health::{health_score, HealthInput, HealthScore};
 pub use nutrition::{advise as nutrition_advise, default_ingredients, feed_tips, mix as feed_mix, pearson_square, stage_for, stages_for, FeedOnHand, FeedStage, Ingredient, MixResult, NutritionAdvice};
 pub use perf::{performance, PerfInput, Performance};
+pub use planner::{plan, FeedProduct, PlanComparison, PlanRequest, PlanResult, Strategy};
+pub use protein::{fit as protein_fit, growth_factor, ProteinFit, ProteinResponse};
 pub use species::{FeedRateRow, GrowthRow, SpeciesProfile, WaterThresholds};
 pub use water::{assess_water, WaterAssessment, WaterSample};
 

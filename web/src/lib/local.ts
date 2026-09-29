@@ -2,6 +2,8 @@
 // กติกาการคำนวณทั้งหมดยังมาจาก aqua-engine (WASM) ตัวเดียวกับฝั่งเซิร์ฟเวอร์ ที่นี่ทำแค่ประกอบข้อมูลป้อนให้ engine
 import { engine, speciesByCode } from './engine'
 import { todayISO } from './format'
+import { withArea } from './pond'
+import { planToday } from './plan'
 
 const KEY = 'teedet.local.db'
 const MODE_KEY = 'teedet.local.on'
@@ -27,6 +29,8 @@ export function setLocalMode(on: boolean) {
   if (on) localStorage.setItem(MODE_KEY, '1')
   else localStorage.removeItem(MODE_KEY)
 }
+
+const POND_FIELDS = ['shape', 'width_m', 'length_m', 'diameter_m', 'area_rai', 'area_m2', 'depth_m', 'water_source', 'aeration', 'note', 'lat', 'lng', 'location_accuracy_m']
 
 const uid = () => (crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`)
 
@@ -63,10 +67,13 @@ export function save(d: LocalDb) {
 export function exportJson(): string {
   return JSON.stringify(db(), null, 1)
 }
-export function importJson(text: string) {
+/** คืนรายการรูปในไฟล์สำรอง (ถ้ามี) ให้ผู้เรียกนำเข้าเก็บในที่เก็บรูปต่อ */
+export function importJson(text: string): any[] {
   const d = JSON.parse(text)
   if (!d || typeof d !== 'object' || !Array.isArray(d.farms)) throw new Error('ไฟล์ไม่ถูกต้อง')
-  save({ ...blank(), ...d })
+  const { photos, ...rest } = d
+  save({ ...blank(), ...rest })
+  return Array.isArray(photos) ? photos : []
 }
 
 /** เริ่มใช้งานครั้งแรก: สร้างฟาร์มให้เลย */
@@ -278,7 +285,8 @@ export async function cropSnapshot(cropId: string, opts: { date?: string; withWe
 
   return {
     date,
-    crop: { ...crop, pond_name: pond?.name ?? '-', area_rai: pond?.area_rai ?? null, farm_name: farm?.name ?? '', lat: farm?.lat, lng: farm?.lng, province: farm?.province, meals_per_day: farm?.meals_per_day, farm_factor: farm?.farm_factor, bag_kg: farm?.bag_kg },
+    plan_today: planToday(crop.plan, day),
+    crop: { ...crop, plan: undefined, has_plan: !!crop.plan, pond_name: pond?.name ?? '-', area_rai: pond?.area_rai ?? null, farm_name: farm?.name ?? '', lat: farm?.lat, lng: farm?.lng, province: farm?.province, meals_per_day: farm?.meals_per_day, farm_factor: farm?.farm_factor, bag_kg: farm?.bag_kg },
     species: { code: sp.code, name_th: sp.name_th, market_weight_g: sp.market_weight_g, approximate: sp.approximate },
     day,
     alive_count: alive,
@@ -422,7 +430,9 @@ export async function handle(method: string, path: string, body?: any): Promise<
   if (M('GET', 'farms', ANY, 'today')) return farmToday(seg[1])
   if (M('POST', 'farms', ANY, 'ponds')) {
     const order = d.ponds.filter((p) => p.farm_id === seg[1]).length + 1
-    const p2 = stamp({ farm_id: seg[1], name: body.name, pond_type: body.pond_type ?? 'earthen', area_rai: body.area_rai ?? null, area_m2: body.area_m2 ?? (body.area_rai ? body.area_rai * 1600 : null), depth_m: body.depth_m ?? null, sort_order: order, active: 1 })
+    if (!String(body.name ?? '').trim()) throw new Error('กรอกชื่อบ่อ')
+    const fields = Object.fromEntries(POND_FIELDS.map((k) => [k, body[k] ?? null]))
+    const p2 = stamp({ ...withArea(fields), farm_id: seg[1], name: String(body.name).trim(), pond_type: body.pond_type ?? 'earthen', cover_photo_id: null, sort_order: order, active: 1 })
     d.ponds.push(p2)
     save(d)
     return { id: p2.id }
@@ -431,7 +441,7 @@ export async function handle(method: string, path: string, body?: any): Promise<
     const status = q.get('status') || 'active'
     return d.crops
       .filter((c) => c.farm_id === seg[1] && (status === 'all' || c.status === status))
-      .map((c) => ({ ...c, pond_name: d.ponds.find((p) => p.id === c.pond_id)?.name ?? '-' }))
+      .map((c) => ({ ...c, plan: undefined, has_plan: !!c.plan, pond_name: d.ponds.find((p) => p.id === c.pond_id)?.name ?? '-' }))
   }
   if (M('GET', 'farms', ANY, 'stock')) return stockSummary(d, seg[1])
   if (M('POST', 'farms', ANY, 'stock')) {
@@ -445,14 +455,18 @@ export async function handle(method: string, path: string, body?: any): Promise<
 
   if (M('PATCH', 'ponds', ANY)) {
     const p2 = d.ponds.find((x) => x.id === seg[1])
-    if (p2) Object.assign(p2, Object.fromEntries(Object.entries(body).filter(([, v]) => v !== null && v !== undefined)))
+    if (!p2) throw new Error('ไม่พบบ่อ')
+    if ('name' in body && !String(body.name ?? '').trim()) throw new Error('กรอกชื่อบ่อ')
+    // ส่ง null = ล้างค่า เหมือนฝั่งเซิร์ฟเวอร์
+    for (const k of [...POND_FIELDS, 'name', 'pond_type', 'active', 'sort_order']) if (k in body) p2[k] = body[k]
+    if (['shape', 'width_m', 'length_m', 'diameter_m', 'area_rai', 'area_m2'].some((k) => k in body)) Object.assign(p2, withArea(p2))
     save(d)
     return { ok: true }
   }
   if (M('POST', 'ponds', ANY, 'crops')) {
     const pond = d.ponds.find((x) => x.id === seg[1])
     if (d.crops.some((c) => c.pond_id === seg[1] && c.status === 'active')) throw new Error('บ่อนี้มีรุ่นที่เลี้ยงอยู่ ปิดรุ่นเดิมก่อน')
-    const c = stamp({ pond_id: seg[1], farm_id: pond.farm_id, species_code: body.species_code || 'nile_tilapia', stocked_at: body.stocked_at || todayISO(), stocked_count: Number(body.stocked_count), stock_weight_g: Number(body.stock_weight_g), fry_price_each: Number(body.fry_price_each || 0), target_weight_g: body.target_weight_g ?? null, note: body.note ?? null, status: 'active' })
+    const c = stamp({ pond_id: seg[1], farm_id: pond.farm_id, species_code: body.species_code || 'nile_tilapia', stocked_at: body.stocked_at || todayISO(), stocked_count: Number(body.stocked_count), stock_weight_g: Number(body.stock_weight_g), fry_price_each: Number(body.fry_price_each || 0), target_weight_g: body.target_weight_g ?? null, note: body.note ?? null, plan: body.plan && typeof body.plan === 'object' ? body.plan : null, status: 'active' })
     d.crops.push(c)
     d.weighings.push(stamp({ crop_id: c.id, weigh_date: c.stocked_at, avg_weight_g: c.stock_weight_g, method: 'stocking', note: 'น้ำหนักตอนปล่อย' }))
     if (c.fry_price_each > 0) d.expenses.push(stamp({ crop_id: c.id, expense_date: c.stocked_at, category: 'fry', amount: c.fry_price_each * c.stocked_count, note: 'ค่าลูกปลา' }))

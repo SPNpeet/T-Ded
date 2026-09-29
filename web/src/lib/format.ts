@@ -39,13 +39,15 @@ export function thDate(iso?: string | null, withYear = true): string {
   return `${d} ${TH_MONTHS[m - 1]}${withYear ? ' ' + (y + 543) : ''}`
 }
 
-export function thDateTime(iso?: string | null): string {
+export function thDateTime(iso?: string | null, withYear = false): string {
   if (!iso) return '-'
   const d = new Date(iso)
   if (isNaN(d.getTime())) return thDate(iso)
   const hh = String(d.getHours()).padStart(2, '0')
   const mm = String(d.getMinutes()).padStart(2, '0')
-  return `${thDate(iso, false)} ${hh}:${mm} น.`
+  // วันที่ต้องเป็นวันตามเวลาเครื่อง ไม่ใช่วันของสตริง UTC (ก่อน 7 โมงเช้าจะกลายเป็นเมื่อวาน)
+  const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return `${thDate(local, withYear)} ${hh}:${mm} น.`
 }
 
 export function n(v: number | null | undefined, digits = 0): string {
