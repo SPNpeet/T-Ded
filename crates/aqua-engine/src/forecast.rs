@@ -246,7 +246,8 @@ mod tests {
             bag_kg: None,
         });
         assert!(p.reached_target);
-        assert!(p.harvest_day >= 115 && p.harvest_day <= 125, "day {}", p.harvest_day);
+        // เส้นมาตรฐาน 30 ก. ถึง 800 ก. ราววันที่ 150 (กรมประมง 4-5 เดือน)
+        assert!(p.harvest_day >= 140 && p.harvest_day <= 160, "day {}", p.harvest_day);
         assert!((p.survival_pct - 85.0).abs() < 1.5, "sr {}", p.survival_pct);
         assert!(p.feed_kg_remaining > 3000.0 && p.feed_kg_remaining < 7000.0, "feed {}", p.feed_kg_remaining);
         assert!(p.projected_fcr.unwrap() > 1.0 && p.projected_fcr.unwrap() < 2.2);

@@ -114,7 +114,7 @@ mod tests {
     #[test]
     fn on_track_when_matches_curve() {
         let sp = SpeciesProfile::nile_tilapia();
-        let g = compare_growth(&sp, 30.0, 55, 300.0, None, Some(800.0));
+        let g = compare_growth(&sp, 30.0, 56, 155.0, None, Some(800.0));
         assert_eq!(g.status, "on_track");
         assert!(g.days_to_target.unwrap() > 0);
     }
@@ -122,7 +122,7 @@ mod tests {
     #[test]
     fn behind_detected() {
         let sp = SpeciesProfile::nile_tilapia();
-        let g = compare_growth(&sp, 30.0, 55, 240.0, Some((41, 200.0)), None);
+        let g = compare_growth(&sp, 30.0, 56, 115.0, Some((42, 100.0)), None);
         assert!(g.status == "behind" || g.status == "far_behind");
         assert!(g.actual_adg_recent.is_some());
     }
